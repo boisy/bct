@@ -4,6 +4,30 @@ Bitstream Computation Toolkit (BCT) is a collection of bitstream conversion and 
 
 ## Getting Started
 
+BCT has tools for converting numbers between 0 and 1 into bitstreams. For example, one possible bitstream representation of:
+
+  0.25
+ 
+is:
+
+  1000
+  
+Another example:
+
+  0.125
+
+is:
+
+  10000000
+  
+Converting such a number to a bitstream is possible with the following code:
+
+```import bct
+
+bst = bct.unary(1, 0.125)
+print(bst)
+```
+ 
 ### Using the Toolkit
 
 ### Running Unit Tests
