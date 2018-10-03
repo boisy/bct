@@ -8,23 +8,6 @@
 import sys
 import unittest
 
-# Unit tests
-class BitstreamTest(unittest.TestCase):
-	def test_unary(self):
-		output = unary(1, .75)
-		self.assertEqual(output, '1110')
-		output = unary(2, .75)
-		self.assertEqual(output, '11111100')
-		output = unary(3, .75)
-		self.assertEqual(output, '111111111000')
-
-		output = unary(1, .25)
-		self.assertEqual(output, '1000')
-		output = unary(2, .25)
-		self.assertEqual(output, '11000000')
-		output = unary(3, .25)
-		self.assertEqual(output, '111000000000')
-
 # Unary bitstream generator
 # Added Oct 03 2018
 #
@@ -42,6 +25,30 @@ def unary(n, number):
 				result = result + '0'
 	return result
 
+
+# Unit tests
+class bctTest(unittest.TestCase):
+	def test_unary(self):
+		output = unary(1, .75)
+		self.assertEqual(output, '1110')
+		output = unary(2, .75)
+		self.assertEqual(output, '11111100')
+		output = unary(3, .75)
+		self.assertEqual(output, '111111111000')
+
+		output = unary(1, .25)
+		self.assertEqual(output, '1000')
+		output = unary(2, .25)
+		self.assertEqual(output, '11000000')
+		output = unary(3, .25)
+		self.assertEqual(output, '111000000000')
+
+		output = unary(1, .125)
+		self.assertEqual(output, '10000000')
+		output = unary(2, .125)
+		self.assertEqual(output, '1100000000000000')
+		output = unary(3, .125)
+		self.assertEqual(output, '111000000000000000000000')
 
 # perform unit testing if no parameters specified (e.g. python bct.py)
 if __name__ == '__main__':
