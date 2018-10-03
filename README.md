@@ -4,6 +4,12 @@ Bitstream Computation Toolkit (BCT) is a collection of bitstream conversion and 
 
 ## Getting Started
 
+### Using the Toolkit
+
+### Running Unit Tests
+To run unit tests:
+
+```python bct.py```
 
 ## Attributions
 
