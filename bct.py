@@ -8,6 +8,7 @@
 import sys
 import unittest
 
+# Unit tests
 class BitstreamTest(unittest.TestCase):
 	def test_unary(self):
 		output = unary(1, .75)
@@ -16,6 +17,13 @@ class BitstreamTest(unittest.TestCase):
 		self.assertEqual(output, '11111100')
 		output = unary(3, .75)
 		self.assertEqual(output, '111111111000')
+
+		output = unary(1, .25)
+		self.assertEqual(output, '1000')
+		output = unary(2, .25)
+		self.assertEqual(output, '11000000')
+		output = unary(3, .25)
+		self.assertEqual(output, '111000000000')
 
 # Unary bitstream generator
 # Added Oct 03 2018
@@ -27,8 +35,8 @@ def unary(n, number):
 	result = ''
 	numerator, denominator = number.as_integer_ratio()
 	for counter in range(denominator):
-		for y in range(n):
-			if counter + 1 < denominator:
+		for i in range(n):
+			if counter < numerator:
 				result = result + '1'
 			else:
 				result = result + '0'
