@@ -9,4 +9,5 @@ Bitstream Computation Toolkit (BCT) is a collection of bitstream conversion and 
 
 Authors: Boisy G. Pitre and Dr. M. Hassan Najafi
 
+SCHOOL OF COMPUTING & INFORMATICS
 University of Louisiana at Lafayette
