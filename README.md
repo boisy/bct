@@ -32,7 +32,7 @@ BCT offers a number of primitives that work on bitstreams:
 #### NOT operation
 Takes a bitstream and returns the complement of each of the bits
 ```
-result = not_op('10001')
+result = bct.not_op('10001')
 print(result)
 01110
 ```
@@ -40,7 +40,7 @@ print(result)
 ### OR operation
 Takes two bitstreams and returns the NOR result of the bits
 ```
-result = nor_op('1101', '1001')
+result = bct.nor_op('1101', '1001')
 print(result)
 1101
 ```
@@ -48,7 +48,7 @@ print(result)
 ### NOR operation
 Takes two bitstreams and returns the OR result of the bits
 ```
-result = or_op('1101', '1001')
+result = bct.or_op('1101', '1001')
 print(result)
 0010
 ```
@@ -56,7 +56,7 @@ print(result)
 ### AND operation
 Takes two bitstreams and returns the AND result of the bits
 ```
-result = and_op('1101', '1001')
+result = bct.and_op('1101', '1001')
 print(result)
 1001
 ```
@@ -64,7 +64,7 @@ print(result)
 ### NAND operation
 Takes two bitstreams and returns the NAND result of the bits
 ```
-result = nand_op('1101', '1001')
+result = bct.nand_op('1101', '1001')
 print(result)
 0110
 ```
@@ -72,7 +72,7 @@ print(result)
 ### XOR operation
 Takes two bitstreams and returns the XOR result of the bits
 ```
-result = xor_op('1101', '1001')
+result = bct.xor_op('1101', '1001')
 print(result)
 0100
 ```
@@ -80,7 +80,7 @@ print(result)
 ### NXOR operation
 Takes two bitstreams and returns the NXOR result of the bits
 ```
-result = nxor_op('1101', '1001')
+result = bct.nxor_op('1101', '1001')
 print(result)
 1011
 ```
