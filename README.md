@@ -29,13 +29,61 @@ print(bst) # prints 11000000
 ### Primitives
 BCT offers a number of primitives that work on bitstreams:
 
-not_op(bitstream): takes a bitstream and returns the complement of each of the bits (e.g. not_op('10001') -> '01110')
-or_op(bitstream1, bitstream2): takes two bitstreams and returns the OR result of the bits (e.g. or_op('1101', '1001') -> '1101')
-nor_op(bitstream1, bitstream2): takes two bitstreams and returns the NOR result of the bits (e.g. or_op('1101', '1001') -> '0010')
-and_op(bitstream1, bitstream2): takes two bitstreams and returns the AND result of the bits (e.g. or_op('1101', '1001') -> '1001')
-nand_op(bitstream1, bitstream2): takes two bitstreams and returns the NAND result of the bits (e.g. or_op('1101', '1001') -> '0110')
-xor_op(bitstream1, bitstream2): takes two bitstreams and returns the XOR result of the bits (e.g. or_op('1101', '1001') -> '0100')
-nxor_op(bitstream1, bitstream2): takes two bitstreams and returns the NXOR result of the bits (e.g. or_op('1101', '1001') -> '1011')
+#### NOT operation
+Takes a bitstream and returns the complement of each of the bits
+```
+result = not_op('10001')
+print(result)
+01110
+```
+
+### OR operation
+Takes two bitstreams and returns the NOR result of the bits
+```
+result = nor_op('1101', '1001')
+print(result)
+1101
+```
+
+### NOR operation
+Takes two bitstreams and returns the OR result of the bits
+```
+result = or_op('1101', '1001')
+print(result)
+0010
+```
+
+### AND operation
+Takes two bitstreams and returns the AND result of the bits
+```
+result = and_op('1101', '1001')
+print(result)
+1001
+```
+
+### NAND operation
+Takes two bitstreams and returns the NAND result of the bits
+```
+result = nand_op('1101', '1001')
+print(result)
+0110
+```
+
+### XOR operation
+Takes two bitstreams and returns the XOR result of the bits
+```
+result = xor_op('1101', '1001')
+print(result)
+0100
+```
+
+### NXOR operation
+Takes two bitstreams and returns the NXOR result of the bits
+```
+result = nxor_op('1101', '1001')
+print(result)
+1011
+```
 
 ### Running Unit Tests
 To run unit tests:
