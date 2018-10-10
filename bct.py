@@ -45,6 +45,75 @@ def rotate(bitstring):
 
 	return result
 
+# NOT operation on bitstreams
+def not_op(bitstream):
+	result = ''
+
+	for x in range(len(bitstream)):
+		if bitstream[x] == '0':
+			result = result + '1'
+		else:
+			result = result + '0'
+
+	return result
+	
+# AND operation on bitstreams
+def and_op(bitstream1, bitstream2):
+	result = ''
+
+	for x in range(len(bitstream1)):
+		bs1 = int(bitstream1[x])
+		bs2 = int(bitstream2[x])
+		bsr = bs1 & bs2
+		result = result + str(bsr)
+
+	return result
+	
+# NAND operation on bitstreams
+def nand_op(bitstream1, bitstream2):
+	and_result = and_op(bitstream1, bitstream2)
+	result = not_op(and_result)
+
+	return result
+	
+# OR operation on bitstreams
+def or_op(bitstream1, bitstream2):
+	result = ''
+
+	for x in range(len(bitstream1)):
+		bs1 = int(bitstream1[x])
+		bs2 = int(bitstream2[x])
+		bsr = bs1 | bs2
+		result = result + str(bsr)
+
+	return result
+
+# NOR operation on bitstreams
+def nor_op(bitstream1, bitstream2):
+	or_result = or_op(bitstream1, bitstream2)
+	result = not_op(or_result)
+
+	return result
+	
+# XOR operation on bitstreams
+def xor_op(bitstream1, bitstream2):
+	result = ''
+
+	for x in range(len(bitstream1)):
+		bs1 = int(bitstream1[x])
+		bs2 = int(bitstream2[x])
+		bsr = bs1 ^ bs2
+		result = result + str(bsr)
+
+	return result
+# NXOR operation on bitstreams
+def nxor_op(bitstream1, bitstream2):
+	xor_result = xor_op(bitstream1, bitstream2)
+	result = not_op(xor_result)
+
+	return result
+
+# NOR operation on bitstreams
 # Convert a bitstream to a float
 def to_float(bitstream):
 	result = 0
@@ -89,6 +158,33 @@ class bctTest(unittest.TestCase):
 		result = to_float('10001001')
 		self.assertEqual(result, 0.375)
 
+	def test_not(self):
+		result = not_op('100100')
+		self.assertEqual(result, '011011')
+
+	def test_and(self):
+		result = and_op('100', '001')
+		self.assertEqual(result, '000')
+
+	def test_nand(self):
+		result = nand_op('101', '011')
+		self.assertEqual(result, '110')
+
+	def test_or(self):
+		result = or_op('111', '001')
+		self.assertEqual(result, '111')
+		
+	def test_nor(self):
+		result = nor_op('111', '001')
+		self.assertEqual(result, '000')
+
+	def test_xor(self):
+		result = xor_op('101', '011')
+		self.assertEqual(result, '110')
+
+	def test_nxor(self):
+		result = nxor_op('101', '011')
+		self.assertEqual(result, '001')
 		
 # perform unit testing if no parameters specified (e.g. python bct.py)
 if __name__ == '__main__':
