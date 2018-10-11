@@ -11,21 +11,50 @@ import unittest
 # Unary bitstream generator
 # Added Oct 03 2018
 #
-# e.g. unary(1, .75) -> 1 1 1 0 (1110)
-#      unary(2, .75) -> 11 11 11 00 (11111100)
-#      unary(3, .75) -> 111 111 111 000 (111111111000)
-def unary(n, number):
+# Parameters:
+#  stream_length: length, in bits, of the desired output bitstream
+#  number: the floating point number (0 <=n < 1) to represent as a bitstream
+#
+# e.g. unary_sng(4, .75) -> 1 1 1 0 (1110)
+#      unary_sng(8, .75) -> 11 11 11 00 (11111100)
+#      unary_sng(12, .75) -> 111 111 111 000 (111111111000)
+def unary_sng(stream_length, number):
 	result = ''
-	numerator, denominator = number.as_integer_ratio()
-	for counter in range(denominator):
-		for i in range(n):
-			if counter < numerator:
-				result = result + '1'
-			else:
-				result = result + '0'
+	compare2 = number * stream_length
+	for counter in range(stream_length):
+		compare1 = counter
+		if compare1 < compare2:
+			result = result + '1'
+		else:
+			result = result + '0'
 	return result
 
+# Clock division method
+# Extends a bitstream through clock divison
+#
+# Parameters:
+#  order: the operational order of the bitstream 
+#  bitstream: the bitstream to use
+#  total_inputs: the total number of inputs
+#
+# e.g. clockdiv(1, '1110', 2) -> '1110 1110 1110 1110'
+#      clockdiv(2, '1001', 2) -> '11 00 00 11 11 00 00 11'
+#      clockdiv(2, '1001', 3) -> '11 00 00 11' (repeated to 4^3 bits)
+def clockdiv(order, bitstream, total_inputs):
+	result = ''
+	repeat_count = pow(len(bitstream), order - 1)
+	
+	for counter2 in range(len(bitstream)):
+		for counter3 in range(order):
+			bit = bitstream[counter2]
+			result = result + bit
+		
+	entire_length = pow(len(bitstream), total_inputs)
+	while len(result) < entire_length:
+		result = result + result
 
+	return result
+	
 # Rotate the passed bitstream
 #
 # e.g. rotate('10') -> 10 01
@@ -127,26 +156,49 @@ def to_float(bitstream):
 
 # Unit tests
 class bctTest(unittest.TestCase):
-	def test_unary(self):
-		result = unary(1, .75)
+	def test_clockdiv(self):
+		result = clockdiv(1, '1110', 2)
+		self.assertEqual(result, '1110111011101110')
+		result = clockdiv(2, '1001', 2)
+		self.assertEqual(result, '1100001111000011')
+		result = clockdiv(2, '1001', 3)
+		self.assertEqual(result, '1100001111000011110000111100001111000011110000111100001111000011')
+
+	def test_unary_sng(self):
+		result = unary_sng(4, .75)
 		self.assertEqual(result, '1110')
-		result = unary(2, .75)
+		result = unary_sng(8, .75)
 		self.assertEqual(result, '11111100')
-		result = unary(3, .75)
+		result = unary_sng(12, .75)
 		self.assertEqual(result, '111111111000')
 
-		result = unary(1, .25)
+		result = unary_sng(4, .25)
 		self.assertEqual(result, '1000')
-		result = unary(2, .25)
+		result = unary_sng(8, .25)
 		self.assertEqual(result, '11000000')
-		result = unary(3, .25)
+		result = unary_sng(12, .25)
 		self.assertEqual(result, '111000000000')
 
-		result = unary(1, .125)
+	def test_unary_sng(self):
+		result = unary_sng(4, .75)
+		self.assertEqual(result, '1110')
+		result = unary_sng(8, .75)
+		self.assertEqual(result, '11111100')
+		result = unary_sng(12, .75)
+		self.assertEqual(result, '111111111000')
+
+		result = unary_sng(4, .25)
+		self.assertEqual(result, '1000')
+		result = unary_sng(8, .25)
+		self.assertEqual(result, '11000000')
+		result = unary_sng(12, .25)
+		self.assertEqual(result, '111000000000')
+
+		result = unary_sng(8, .125)
 		self.assertEqual(result, '10000000')
-		result = unary(2, .125)
+		result = unary_sng(16, .125)
 		self.assertEqual(result, '1100000000000000')
-		result = unary(3, .125)
+		result = unary_sng(24, .125)
 		self.assertEqual(result, '111000000000000000000000')
 
 

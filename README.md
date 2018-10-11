@@ -37,7 +37,7 @@ print(result)
 01110
 ```
 
-### OR operation
+#### OR operation
 Takes two bitstreams and returns the NOR result of the bits
 ```
 result = bct.nor_op('1101', '1001')
@@ -45,7 +45,7 @@ print(result)
 1101
 ```
 
-### NOR operation
+#### NOR operation
 Takes two bitstreams and returns the OR result of the bits
 ```
 result = bct.or_op('1101', '1001')
@@ -53,7 +53,7 @@ print(result)
 0010
 ```
 
-### AND operation
+#### AND operation
 Takes two bitstreams and returns the AND result of the bits
 ```
 result = bct.and_op('1101', '1001')
@@ -61,7 +61,7 @@ print(result)
 1001
 ```
 
-### NAND operation
+#### NAND operation
 Takes two bitstreams and returns the NAND result of the bits
 ```
 result = bct.nand_op('1101', '1001')
@@ -69,7 +69,7 @@ print(result)
 0110
 ```
 
-### XOR operation
+#### XOR operation
 Takes two bitstreams and returns the XOR result of the bits
 ```
 result = bct.xor_op('1101', '1001')
@@ -77,13 +77,22 @@ print(result)
 0100
 ```
 
-### NXOR operation
+#### NXOR operation
 Takes two bitstreams and returns the NXOR result of the bits
 ```
 result = bct.nxor_op('1101', '1001')
 print(result)
 1011
 ```
+
+### Higher Level Bitstream Functions
+
+#### Clock Division
+Takes a bitstream and uses clock division to extend it
+```
+result = bct.clockdiv(2, '1101', 2)
+print(result)
+1111001111110011
 
 ### Running Unit Tests
 To run unit tests:
