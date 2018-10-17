@@ -8,16 +8,33 @@
 import sys
 import unittest
 
+# Number of 1's in a bitstream
+# Added Oct 17 2018
+def number_of_1(bitstream):
+	counter = 0
+	for i in range(len(bitstream)):
+		if bitstream[i] == '1':
+			counter = counter + 1
+
+	return counter
+	
+# Number of 0's in a bitstream
+# Added Oct 17 2018
+def number_of_0(bitstream):
+	counter = 0
+	for i in range(len(bitstream)):
+		if bitstream[i] == '0':
+			counter = counter + 1
+
+	return counter
+	
 # Unary bitstream generator
 # Added Oct 03 2018
 #
 # Parameters:
 #  stream_length: length, in bits, of the desired output bitstream
-#  number: the floating point number (0 <=n < 1) to represent as a bitstream
+#  number: the floating point number (0 <= n < 1) to represent as a bitstream
 #
-# e.g. unary_sng(4, .75) -> 1 1 1 0 (1110)
-#      unary_sng(8, .75) -> 11 11 11 00 (11111100)
-#      unary_sng(12, .75) -> 111 111 111 000 (111111111000)
 def unary_sng(stream_length, number):
 	result = ''
 	compare2 = number * stream_length
@@ -37,15 +54,13 @@ def unary_sng(stream_length, number):
 #  bitstream: the bitstream to use
 #  total_inputs: the total number of inputs
 #
-# e.g. clockdiv(1, '1110', 2) -> '1110 1110 1110 1110'
-#      clockdiv(2, '1001', 2) -> '11 00 00 11 11 00 00 11'
-#      clockdiv(2, '1001', 3) -> '11 00 00 11' (repeated to 4^3 bits)
+# e.g. clockdiv(2, '1110', 2) -> '1111 1111 1111 0000'
 def clockdiv(order, bitstream, total_inputs):
 	result = ''
 	repeat_count = pow(len(bitstream), order - 1)
 	
 	for counter2 in range(len(bitstream)):
-		for counter3 in range(order):
+		for counter3 in range(repeat_count):
 			bit = bitstream[counter2]
 			result = result + bit
 		
@@ -59,16 +74,17 @@ def clockdiv(order, bitstream, total_inputs):
 #
 # e.g. rotate('10') -> 10 01
 #       rotate('1010') -> 1010 0101 1010 0101
-def rotate(bitstring):
+def rotate(order, bitstream, total_inputs):
 	result = ''
+	stall_count = pow(len(bitstream), order - 1)
+	entire_length = pow(len(bitstream), total_inputs)
 	count = 0
 	currentBit = ''
-	targetSize = len(bitstring) * len(bitstring)
-	while len(result) < targetSize:
-		currentBit = bitstring[count % len(bitstring)]
+	while len(result) < entire_length:
+		currentBit = bitstream[count % len(bitstream)]
 		count = count + 1
 		result = result + currentBit
-		if len(result) % len(bitstring) == 0 and len(result) < targetSize:
+		if stall_count != 1 and len(result) % stall_count == 0 and len(result) < entire_length:
 			# we have arrived at a position where the last bit needs to be repeated
 			result = result + currentBit
 
@@ -203,8 +219,12 @@ class bctTest(unittest.TestCase):
 
 
 	def test_rotate(self):
-		result = rotate('10')
-		self.assertEqual(result, '1001')
+		result = rotate(1, '1000', 1)
+		self.assertEqual(result, '1000')
+		result = rotate(1, '1000', 3)
+		self.assertEqual(result, '1000100010001000100010001000100010001000100010001000100010001000')
+		result = rotate(2, '1000', 3)
+		self.assertEqual(result, '1000010000100001100001000010000110000100001000011000010000100001')
 
 	def test_to_float(self):
 		result = to_float('10001001')
@@ -237,6 +257,18 @@ class bctTest(unittest.TestCase):
 	def test_nxor(self):
 		result = nxor_op('101', '011')
 		self.assertEqual(result, '001')
+		
+	def test_clockdiv(self):
+		result = clockdiv(2, '1000', 2)
+		self.assertEqual(result, '1111000000000000')
+		
+	def test_number_of_1(self):
+		result = number_of_1('1000')
+		self.assertEqual(result, 1)
+		
+	def test_number_of_0(self):
+		result = number_of_0('1000')
+		self.assertEqual(result, 3)
 		
 # perform unit testing if no parameters specified (e.g. python bct.py)
 if __name__ == '__main__':
