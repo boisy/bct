@@ -5,6 +5,7 @@
 # University of Louisiana at Lafayette
 # Lafayette, Louisiana
 
+import numpy
 import sys
 import unittest
 
@@ -48,14 +49,14 @@ def lfsr_sng(precision, seed, combination):
 #  number: the floating point number (0 <= n < 1) to represent as a bitstream
 #
 def unary_sng(stream_length, number):
-	result = ''
+	result = numpy.zeros(0)
 	compare2 = number * stream_length
 	for counter in range(stream_length):
 		compare1 = counter
 		if compare1 < compare2:
-			result = result + '1'
+			result = numpy.append(result, 1)
 		else:
-			result = result + '0'
+			result = numpy.append(result, 0)
 	return result
 
 # Clock division method
@@ -197,41 +198,25 @@ class bctTest(unittest.TestCase):
 
 	def test_unary_sng(self):
 		result = unary_sng(4, .75)
-		self.assertEqual(result, '1110')
+		numpy.testing.assert_equal(result, [1, 1, 1, 0])
 		result = unary_sng(8, .75)
-		self.assertEqual(result, '11111100')
+		numpy.testing.assert_equal(result, [1, 1, 1, 1, 1, 1, 0, 0])
 		result = unary_sng(12, .75)
-		self.assertEqual(result, '111111111000')
+		numpy.testing.assert_equal(result, [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0])
 
 		result = unary_sng(4, .25)
-		self.assertEqual(result, '1000')
+		numpy.testing.assert_equal(result, [1, 0, 0, 0])
 		result = unary_sng(8, .25)
-		self.assertEqual(result, '11000000')
+		numpy.testing.assert_equal(result, [1, 1, 0, 0, 0, 0, 0, 0])
 		result = unary_sng(12, .25)
-		self.assertEqual(result, '111000000000')
-
-	def test_unary_sng(self):
-		result = unary_sng(4, .75)
-		self.assertEqual(result, '1110')
-		result = unary_sng(8, .75)
-		self.assertEqual(result, '11111100')
-		result = unary_sng(12, .75)
-		self.assertEqual(result, '111111111000')
-
-		result = unary_sng(4, .25)
-		self.assertEqual(result, '1000')
-		result = unary_sng(8, .25)
-		self.assertEqual(result, '11000000')
-		result = unary_sng(12, .25)
-		self.assertEqual(result, '111000000000')
+		numpy.testing.assert_equal(result, [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
 		result = unary_sng(8, .125)
-		self.assertEqual(result, '10000000')
+		numpy.testing.assert_equal(result, [1, 0, 0, 0, 0, 0, 0, 0])
 		result = unary_sng(16, .125)
-		self.assertEqual(result, '1100000000000000')
+		numpy.testing.assert_equal(result, [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 		result = unary_sng(24, .125)
-		self.assertEqual(result, '111000000000000000000000')
-
+		numpy.testing.assert_equal(result, [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
 	def test_rotate(self):
 		result = rotate(1, '1000', 1)
