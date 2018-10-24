@@ -69,17 +69,17 @@ def unary_sng(stream_length, number):
 #
 # e.g. clockdiv(2, '1110', 2) -> '1111 1111 1111 0000'
 def clockdiv(order, bitstream, total_inputs):
-	result = ''
+	result = numpy.zeros(0)
 	repeat_count = pow(len(bitstream), order - 1)
 	
 	for counter2 in range(len(bitstream)):
 		for counter3 in range(repeat_count):
 			bit = bitstream[counter2]
-			result = result + bit
+			result = numpy.append(result, bit)
 		
 	entire_length = pow(len(bitstream), total_inputs)
 	while len(result) < entire_length:
-		result = result + result
+		result = numpy.append(result, result)
 
 	return result
 	
@@ -189,12 +189,16 @@ def to_float(bitstream):
 # Unit tests
 class bctTest(unittest.TestCase):
 	def test_clockdiv(self):
-		result = clockdiv(1, '1110', 2)
-		self.assertEqual(result, '1110111011101110')
-		result = clockdiv(2, '1001', 2)
-		self.assertEqual(result, '1100001111000011')
-		result = clockdiv(2, '1001', 3)
-		self.assertEqual(result, '1100001111000011110000111100001111000011110000111100001111000011')
+		result = clockdiv(2, [1, 0, 0, 0], 2)
+		numpy.testing.assert_equal(result, [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+		result = clockdiv(1, [1, 1, 1, 0], 2)
+		numpy.testing.assert_equal(result, [1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0])
+#		result = clockdiv(1, '1110', 2)
+#		self.assertEqual(result, '1110111011101110')
+#		result = clockdiv(2, '1001', 2)
+#		self.assertEqual(result, '1100001111000011')
+#		result = clockdiv(2, '1001', 3)
+#		self.assertEqual(result, '1100001111000011110000111100001111000011110000111100001111000011')
 
 	def test_unary_sng(self):
 		result = unary_sng(4, .75)
@@ -257,10 +261,6 @@ class bctTest(unittest.TestCase):
 	def test_nxor(self):
 		result = nxor_op('101', '011')
 		self.assertEqual(result, '001')
-		
-	def test_clockdiv(self):
-		result = clockdiv(2, '1000', 2)
-		self.assertEqual(result, '1111000000000000')
 		
 	def test_number_of_1(self):
 		result = number_of_1('1000')
