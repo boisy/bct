@@ -67,7 +67,7 @@ def unary_sng(stream_length, number):
 #  bitstream: the bitstream to use
 #  total_inputs: the total number of inputs
 #
-# e.g. clockdiv(2, '1110', 2) -> '1111 1111 1111 0000'
+# e.g. clockdiv(2, [1, 1, 1, 0], 2) -> [1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  0, 0, 0, 0]
 def clockdiv(order, bitstream, total_inputs):
 	result = numpy.zeros(0)
 	repeat_count = pow(len(bitstream), order - 1)
@@ -193,12 +193,10 @@ class bctTest(unittest.TestCase):
 		numpy.testing.assert_equal(result, [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 		result = clockdiv(1, [1, 1, 1, 0], 2)
 		numpy.testing.assert_equal(result, [1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0])
-#		result = clockdiv(1, '1110', 2)
-#		self.assertEqual(result, '1110111011101110')
-#		result = clockdiv(2, '1001', 2)
-#		self.assertEqual(result, '1100001111000011')
-#		result = clockdiv(2, '1001', 3)
-#		self.assertEqual(result, '1100001111000011110000111100001111000011110000111100001111000011')
+		result = clockdiv(2, [1, 0, 0, 1], 2)
+		numpy.testing.assert_equal(result, [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1])
+		result = clockdiv(2, [1, 0, 0, 1], 3)
+		numpy.testing.assert_equal(result, [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1])
 
 	def test_unary_sng(self):
 		result = unary_sng(4, .75)
