@@ -8,7 +8,7 @@
 import sys
 import unittest
 
-# Number of 1's in a bitstream
+# Count the number of 1's in a bitstream
 # Added Oct 17 2018
 def number_of_1(bitstream):
 	counter = 0
@@ -18,7 +18,7 @@ def number_of_1(bitstream):
 
 	return counter
 	
-# Number of 0's in a bitstream
+# Count the number of 0's in a bitstream
 # Added Oct 17 2018
 def number_of_0(bitstream):
 	counter = 0
@@ -28,6 +28,18 @@ def number_of_0(bitstream):
 
 	return counter
 	
+# Repeat bitstream
+def repeat(bitstream, repeat_count):
+	result = ''
+	for i in range(repeat_count):
+		result = result + bitstream
+
+	return result
+
+# LFSR maximal period psuedo (4 bit, 5 bit, 6 bit, etc)
+def lfsr_sng(precision, seed, combination):
+	return 0
+
 # Unary bitstream generator
 # Added Oct 03 2018
 #
@@ -89,6 +101,9 @@ def rotate(order, bitstream, total_inputs):
 			result = result + currentBit
 
 	return result
+
+# Relatively prime
+#def relprim(order, bitstream, total_inputs):
 
 # NOT operation on bitstreams
 def not_op(bitstream):

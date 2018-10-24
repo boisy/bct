@@ -60,6 +60,40 @@ class bctTest(unittest.TestCase):
 		print("expected_value = " + str(expected_value))
 		print("calculated_value = " + str(calculated_value))
 
+		term1 = bct.unary_sng(5, .4)
+		term2 = bct.unary_sng(4, .5)
+		print(term1)
+		print(term2)
+		term1 = bct.repeat(term1, 4)
+		term2 = bct.repeat(term2, 5)
+		print(term1)
+		print(term2)
+		product = bct.and_op(term1, term2)
+		
+		expected_value = .4 * .5
+		number_of_1s = bct.number_of_1(product)
+		calculated_value = number_of_1s / len(product)
+		print("expected_value = " + str(expected_value))
+		print("calculated_value = " + str(calculated_value))
+
+		term1 = bct.unary_sng(5, 2/5)
+		term2 = bct.unary_sng(4, 2/4)
+		term3 = bct.unary_sng(7, 3/7)
+		term1 = bct.repeat(term1, int(5 * 4 * 7 / 5))
+		term2 = bct.repeat(term2, int(5 * 4 * 7 / 4))
+		term3 = bct.repeat(term3, int(5 * 4 * 7 / 7))
+		print(term1)
+		print(term2)
+		print(term3)
+		product = bct.and_op(term1, term2)
+		product = bct.and_op(product, term3)
+		
+		expected_value = 2/5 * 2/4 * 3/7
+		number_of_1s = bct.number_of_1(product)
+		calculated_value = number_of_1s / len(product)
+		print("expected_value = " + str(expected_value))
+		print("calculated_value = " + str(calculated_value))
+
 # perform unit testing if no parameters specified (e.g. python bct.py)
 if __name__ == '__main__':
 	unittest.main()
