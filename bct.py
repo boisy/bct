@@ -14,7 +14,7 @@ import unittest
 def number_of_1(bitstream):
 	counter = 0
 	for i in range(len(bitstream)):
-		if bitstream[i] == '1':
+		if bitstream[i] == 1:
 			counter = counter + 1
 
 	return counter
@@ -24,7 +24,7 @@ def number_of_1(bitstream):
 def number_of_0(bitstream):
 	counter = 0
 	for i in range(len(bitstream)):
-		if bitstream[i] == '0':
+		if bitstream[i] == 0:
 			counter = counter + 1
 
 	return counter
@@ -85,21 +85,21 @@ def clockdiv(order, bitstream, total_inputs):
 	
 # Rotate the passed bitstream
 #
-# e.g. rotate('10') -> 10 01
-#       rotate('1010') -> 1010 0101 1010 0101
+# e.g. rotate([1, 0]) -> [1, 0,  0, 1]
+#       rotate([1, 0, 1, 0]) -> [1, 0, 1, 0,  0, 1, 0, 1,  1, 0, 1, 0,  0, 1, 0, 1]
 def rotate(order, bitstream, total_inputs):
-	result = ''
+	result = numpy.zeros(0)
 	stall_count = pow(len(bitstream), order - 1)
 	entire_length = pow(len(bitstream), total_inputs)
 	count = 0
-	currentBit = ''
+	currentBit = 0
 	while len(result) < entire_length:
 		currentBit = bitstream[count % len(bitstream)]
 		count = count + 1
-		result = result + currentBit
+		result = numpy.append(result, currentBit)
 		if stall_count != 1 and len(result) % stall_count == 0 and len(result) < entire_length:
 			# we have arrived at a position where the last bit needs to be repeated
-			result = result + currentBit
+			result = numpy.append(result, currentBit)
 
 	return result
 
@@ -108,25 +108,25 @@ def rotate(order, bitstream, total_inputs):
 
 # NOT operation on bitstreams
 def not_op(bitstream):
-	result = ''
+	result = numpy.zeros(0)
 
 	for x in range(len(bitstream)):
-		if bitstream[x] == '0':
-			result = result + '1'
+		if bitstream[x] == 0:
+			result = numpy.append(result, 1)
 		else:
-			result = result + '0'
+			result = numpy.append(result, 0)
 
 	return result
 	
 # AND operation on bitstreams
 def and_op(bitstream1, bitstream2):
-	result = ''
+	result = numpy.zeros(0)
 
 	for x in range(len(bitstream1)):
 		bs1 = int(bitstream1[x])
 		bs2 = int(bitstream2[x])
 		bsr = bs1 & bs2
-		result = result + str(bsr)
+		result = numpy.append(result, bsr)
 
 	return result
 	
@@ -139,13 +139,13 @@ def nand_op(bitstream1, bitstream2):
 	
 # OR operation on bitstreams
 def or_op(bitstream1, bitstream2):
-	result = ''
+	result = numpy.zeros(0)
 
 	for x in range(len(bitstream1)):
 		bs1 = int(bitstream1[x])
 		bs2 = int(bitstream2[x])
 		bsr = bs1 | bs2
-		result = result + str(bsr)
+		result = numpy.append(result, bsr)
 
 	return result
 
@@ -158,15 +158,16 @@ def nor_op(bitstream1, bitstream2):
 	
 # XOR operation on bitstreams
 def xor_op(bitstream1, bitstream2):
-	result = ''
+	result = numpy.zeros(0)
 
 	for x in range(len(bitstream1)):
 		bs1 = int(bitstream1[x])
 		bs2 = int(bitstream2[x])
 		bsr = bs1 ^ bs2
-		result = result + str(bsr)
+		result = numpy.append(result, bsr)
 
 	return result
+
 # NXOR operation on bitstreams
 def nxor_op(bitstream1, bitstream2):
 	xor_result = xor_op(bitstream1, bitstream2)
@@ -180,7 +181,7 @@ def to_float(bitstream):
 	result = 0
 
 	for a in bitstream:
-		if a == '1':
+		if a == 1:
 			result = result + 1
 
 	return float(result) / float(len(bitstream))
@@ -221,51 +222,52 @@ class bctTest(unittest.TestCase):
 		numpy.testing.assert_equal(result, [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
 	def test_rotate(self):
-		result = rotate(1, '1000', 1)
-		self.assertEqual(result, '1000')
-		result = rotate(1, '1000', 3)
-		self.assertEqual(result, '1000100010001000100010001000100010001000100010001000100010001000')
-		result = rotate(2, '1000', 3)
-		self.assertEqual(result, '1000010000100001100001000010000110000100001000011000010000100001')
+		result = rotate(1, [1, 0, 0, 0], 1)
+		numpy.testing.assert_equal(result, [1, 0, 0, 0])
+		result = rotate(1, [1, 0, 0, 0], 3)
+		numpy.testing.assert_equal(result, [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0])
+		result = rotate(2, [1, 0, 0, 0], 3)
+		numpy.testing.assert_equal(result, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1])
+
 
 	def test_to_float(self):
-		result = to_float('10001001')
+		result = to_float([1, 0, 0, 0, 1, 0, 0, 1])
 		self.assertEqual(result, 0.375)
 
 	def test_not(self):
-		result = not_op('100100')
-		self.assertEqual(result, '011011')
+		result = not_op([1, 0, 0, 1, 0, 0])
+		numpy.testing.assert_equal(result, [0, 1, 1, 0, 1, 1])
 
 	def test_and(self):
-		result = and_op('100', '001')
-		self.assertEqual(result, '000')
+		result = and_op([1, 0, 0], [0, 0, 1])
+		numpy.testing.assert_equal(result, [0, 0, 0])
 
 	def test_nand(self):
-		result = nand_op('101', '011')
-		self.assertEqual(result, '110')
+		result = nand_op([1, 0, 1], [0, 1, 1])
+		numpy.testing.assert_equal(result, [1, 1, 0])
 
 	def test_or(self):
-		result = or_op('111', '001')
-		self.assertEqual(result, '111')
+		result = or_op([1, 1, 1], [0, 0, 1])
+		numpy.testing.assert_equal(result, [1, 1, 1])
 		
 	def test_nor(self):
-		result = nor_op('111', '001')
-		self.assertEqual(result, '000')
+		result = nor_op([1, 1, 1], [0, 0, 1])
+		numpy.testing.assert_equal(result, [0, 0, 0])
 
 	def test_xor(self):
-		result = xor_op('101', '011')
-		self.assertEqual(result, '110')
+		result = xor_op([1, 0, 1], [0, 1, 1])
+		numpy.testing.assert_equal(result, [1, 1, 0])
 
 	def test_nxor(self):
-		result = nxor_op('101', '011')
-		self.assertEqual(result, '001')
+		result = nxor_op([1, 0, 1], [0, 1, 1])
+		numpy.testing.assert_equal(result, [0, 0, 1])
 		
 	def test_number_of_1(self):
-		result = number_of_1('1000')
+		result = number_of_1([1, 0, 0, 0])
 		self.assertEqual(result, 1)
 		
 	def test_number_of_0(self):
-		result = number_of_0('1000')
+		result = number_of_0([1, 0, 0, 0])
 		self.assertEqual(result, 3)
 		
 # perform unit testing if no parameters specified (e.g. python bct.py)
