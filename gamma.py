@@ -32,10 +32,9 @@ def gamma(value, method, degree, precision, coefficients):
 
 	return result
 
-bernstein_values = numpy.array([0.0955, 0.7207, 0.3476, 0.9988, 0.7017, 0.9695, 0.9939])
-result = gamma(3.0/4.0, bct.clockdiv, 6, 4, bernstein_values)
-print(result)
+bernstein_values = numpy.array([2.0 / 8.0, 5.0 / 8.0, 3.0 / 8.0, 6.0 / 8.0])
+result = gamma(4.0/8.0, bct.clockdiv, 3, 8, bernstein_values)
 numOf1 = bct.number_of_1(result)
-total = numOf1 / pow(4, 6)
+total = numOf1 / pow(8, 3)
 print(total)
 
