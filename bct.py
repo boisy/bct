@@ -8,6 +8,7 @@
 import numpy
 import sys
 import unittest
+from lfsr import LFSR
 
 # Count the number of 1's in a bitstream
 # Added Oct 17 2018
@@ -38,8 +39,49 @@ def repeat(bitstream, repeat_count):
 	return result
 
 # LFSR maximal period psuedo (4 bit, 5 bit, 6 bit, etc)
-def lfsr_sng(precision, seed, combination):
-	return 0
+# precision = number of bits
+# position in tap file
+# seed = starting value
+def lfsr_SNG(precision, position_in_tap_file, seed):
+	# open tap file
+	filename = str(precision) + ".txt"
+	file = open(filename, "r")
+	# get "position_in_tap_file"th value
+	for i in range(position_in_tap_file):
+		tap = file.readline()
+	file.close()
+	# build combination from tap
+	tap = int(tap, 16)
+	combination = []
+	for t in reversed(range(precision)):
+		if tap & (1 << t):
+			combination.append(t + 1)
+
+	npseed = numpy.empty(0)
+	# build numpy array of binary from seed
+	for t in reversed(range(precision)):
+		if seed & (1 << t):
+			npseed = numpy.append(npseed, 1)
+		else:
+			npseed = numpy.append(npseed, 0)
+
+	# create LFSR
+	L = LFSR(combination, npseed)
+	# for maximal period, collect values
+	result = []
+	for t in range(pow(2, precision) - 1):
+		v = L.runKCycle(precision)
+		# convert v to int
+		value = 0
+		for i in range(len(v)):
+			if v[i] == 1:
+				value = value + pow(2, precision - i - 1)
+		result.append(value)
+
+	# convert v to an integer
+	# return maximal period array
+	return result
+
 
 # Unary bitstream generator
 # Added Oct 03 2018
@@ -48,7 +90,7 @@ def lfsr_sng(precision, seed, combination):
 #  stream_length: length, in bits, of the desired output bitstream
 #  number: the floating point number (0 <= n < 1) to represent as a bitstream
 #
-def unary_sng(stream_length, number):
+def unary_SNG(stream_length, number):
 	result = numpy.zeros(0)
 	compare2 = number * stream_length
 	for counter in range(stream_length):
@@ -199,26 +241,26 @@ class bctTest(unittest.TestCase):
 		result = clockdiv(2, [1, 0, 0, 1], 3)
 		numpy.testing.assert_equal(result, [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1])
 
-	def test_unary_sng(self):
-		result = unary_sng(4, .75)
+	def test_unary_SNG(self):
+		result = unary_SNG(4, .75)
 		numpy.testing.assert_equal(result, [1, 1, 1, 0])
-		result = unary_sng(8, .75)
+		result = unary_SNG(8, .75)
 		numpy.testing.assert_equal(result, [1, 1, 1, 1, 1, 1, 0, 0])
-		result = unary_sng(12, .75)
+		result = unary_SNG(12, .75)
 		numpy.testing.assert_equal(result, [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0])
 
-		result = unary_sng(4, .25)
+		result = unary_SNG(4, .25)
 		numpy.testing.assert_equal(result, [1, 0, 0, 0])
-		result = unary_sng(8, .25)
+		result = unary_SNG(8, .25)
 		numpy.testing.assert_equal(result, [1, 1, 0, 0, 0, 0, 0, 0])
-		result = unary_sng(12, .25)
+		result = unary_SNG(12, .25)
 		numpy.testing.assert_equal(result, [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
-		result = unary_sng(8, .125)
+		result = unary_SNG(8, .125)
 		numpy.testing.assert_equal(result, [1, 0, 0, 0, 0, 0, 0, 0])
-		result = unary_sng(16, .125)
+		result = unary_SNG(16, .125)
 		numpy.testing.assert_equal(result, [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-		result = unary_sng(24, .125)
+		result = unary_SNG(24, .125)
 		numpy.testing.assert_equal(result, [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
 	def test_rotate(self):
@@ -270,6 +312,10 @@ class bctTest(unittest.TestCase):
 		result = number_of_0([1, 0, 0, 0])
 		self.assertEqual(result, 3)
 		
+	def test_lfsr_sng(self):
+		result = lfsr_SNG(8, 1, 0x42)
+		print(result)
+
 # perform unit testing if no parameters specified (e.g. python bct.py)
 if __name__ == '__main__':
 	unittest.main()

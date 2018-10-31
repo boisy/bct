@@ -7,11 +7,11 @@ import bct
 # degree: number of terms
 # precision: number of bits
 # coefficients: numpy array with 'degree' values
-def gamma(value, method, degree, precision, coefficients):
+def gamma(value, method, SNG, degree, precision, coefficients):
 	# convert coefficients to bitstreams
 	coefficients_encoded = numpy.array([])
 	for i in range(len(coefficients)):
-		a = bct.unary_sng(precision, coefficients[i])
+		a = SNG(precision, coefficients[i])
 		x = method(i + 1, a, degree + 1)
 		if len(coefficients_encoded) == 0:
 			coefficients_encoded = x
@@ -20,7 +20,7 @@ def gamma(value, method, degree, precision, coefficients):
 
 	total = numpy.zeros(pow(precision, degree))
 	for i in range(degree):
-		p = method(i + 1, bct.unary_sng(precision, value), degree)
+		p = method(i + 1, SNG(precision, value), degree)
 		total = numpy.add(total, p)
 
 	result = numpy.zeros(0)
@@ -32,8 +32,8 @@ def gamma(value, method, degree, precision, coefficients):
 
 	return result
 
-bernstein_values = numpy.array([2.0 / 8.0, 5.0 / 8.0, 3.0 / 8.0, 6.0 / 8.0])
-result = gamma(4.0/8.0, bct.clockdiv, 3, 8, bernstein_values)
+bernstein_values = numpy.array([2.0/8.0, 5.0/8.0, 3.0/8.0, 6.0/8.0])
+result = gamma(4.0/8.0, bct.clockdiv, bct.unary_SNG, 3, 8, bernstein_values)
 numOf1 = bct.number_of_1(result)
 total = numOf1 / pow(8, 3)
 print(total)
