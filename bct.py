@@ -283,7 +283,7 @@ class bctTest(unittest.TestCase):
 		n2 = clockdiv(2, n2, 2)
 		result = and_op(n1, n2)
 		result_float = to_float(result)
-		self.assertEqual(result_float, 0.0625)
+		self.assertEqual(result_float, 0.25 * 0.25)
 
 		# multiply .25 * .25
 		n1 = unary_SNG(4, 16, .25)
@@ -292,7 +292,16 @@ class bctTest(unittest.TestCase):
 		n2 = rotate(2, n2, 2)
 		result = and_op(n1, n2)
 		result_float = to_float(result)
-		self.assertEqual(result_float, 0.0625)
+		self.assertEqual(result_float, 0.25 * 0.25)
+
+		# multiply .5 * .25
+		n1 = unary_SNG(4, 16, .5)
+		n2 = lfsr_SNG(4, 16, .25, 1, 3)
+		n1 = clockdiv(1, n1, 2)
+		n2 = rotate(2, n2, 2)
+		result = and_op(n1, n2)
+		result_float = to_float(result)
+		self.assertEqual(result_float, .5 * .25)
 
 	def test_clockdiv(self):
 		result = clockdiv(2, [1, 0, 0, 0], 2)
