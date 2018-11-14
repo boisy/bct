@@ -182,8 +182,15 @@ def rotate(order, bitstream, total_inputs):
 
 	return result
 
+
 # Relatively prime
-#def relprim(order, bitstream, total_inputs):
+def relatively_prime(bitstream, entire_length):
+	result = numpy.zeros(0)
+	number_of_repeats = entire_length / len(bitstream)
+	for x in range(int(number_of_repeats)):
+		result = numpy.append(result, bitstream)
+
+	return result
 
 # NOT operation on bitstreams
 def not_op(bitstream):
@@ -274,11 +281,18 @@ class bctTest(unittest.TestCase):
 		n2 = lfsr_SNG(4, 16, .25, 1, 3)
 		n1 = clockdiv(1, n1, 2)
 		n2 = clockdiv(2, n2, 2)
-		print(n1)
-		print(n2)
 		result = and_op(n1, n2)
 		result_float = to_float(result)
-		print(result_float)
+		self.assertEqual(result_float, 0.0625)
+
+		# multiply .25 * .25
+		n1 = unary_SNG(4, 16, .25)
+		n2 = lfsr_SNG(4, 16, .25, 1, 3)
+		n1 = clockdiv(1, n1, 2)
+		n2 = rotate(2, n2, 2)
+		result = and_op(n1, n2)
+		result_float = to_float(result)
+		self.assertEqual(result_float, 0.0625)
 
 	def test_clockdiv(self):
 		result = clockdiv(2, [1, 0, 0, 0], 2)
@@ -320,6 +334,12 @@ class bctTest(unittest.TestCase):
 		result = rotate(2, [1, 0, 0, 0], 3)
 		numpy.testing.assert_equal(result, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1])
 
+
+	def test_relatively_prime(self):
+		result = relatively_prime([1, 0, 0, 0], 12)
+		numpy.testing.assert_equal(result, [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0])
+		result = relatively_prime([1, 1, 0], 12)
+		numpy.testing.assert_equal(result, [1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0])
 
 	def test_to_float(self):
 		result = to_float([1, 0, 0, 0, 1, 0, 0, 1])
