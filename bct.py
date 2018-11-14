@@ -62,6 +62,7 @@ def lfsr_SNG(precision, stream_length, input_number_float, position_in_tap_file 
 #  precision: bit width
 #  position_in_tap_file: position in tap file
 #  seed = starting value
+# NOTE: we are adding 0 at the beginning of the result to keep the size correct
 def lfsr_RNG(precision, position_in_tap_file, seed):
 	if position_in_tap_file == 0:
 		if precision == 4:
@@ -102,7 +103,9 @@ def lfsr_RNG(precision, position_in_tap_file, seed):
 	# create LFSR
 	L = LFSR(combination, npseed)
 	# for maximal period, collect values
+
 	result = [0]
+
 	for t in range(pow(2, precision) - 1):
 		v = L.runKCycle(precision)
 		# convert v to int
