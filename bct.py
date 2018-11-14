@@ -6,6 +6,7 @@
 # Lafayette, Louisiana
 
 import numpy
+import random
 import sys
 import unittest
 from lfsr import LFSR
@@ -39,10 +40,39 @@ def repeat(bitstream, repeat_count):
 	return result
 
 # LFSR maximal period psuedo (4 bit, 5 bit, 6 bit, etc)
-# precision = number of bits
-# position in tap file
-# seed = starting value
-def lfsr_SNG(precision, position_in_tap_file, seed):
+#  precision: bit width
+#  stream_length: length, in bits, of the desired output bitstream
+#  input_number_float: the floating point number (0 <= n < 1) to represent as a bitstream
+def lfsr_SNG(precision, stream_length, input_number_float, position_in_tap_file = 0, seed = 0):
+	result = numpy.zeros(0)
+
+	# call lfsr_RNG
+	maximal_period_array = lfsr_RNG(precision, 0, 0)
+	ln = pow(2, precision)
+	v = input_number_float * ln
+	for n in maximal_period_array:
+		if n < v:
+			result = numpy.append(result, 1)
+		else:
+			result = numpy.append(result, 0)
+			
+	return result
+
+# LFSR Random Number Generator
+#  precision: bit width
+#  position_in_tap_file: position in tap file
+#  seed = starting value
+def lfsr_RNG(precision, position_in_tap_file, seed):
+	if position_in_tap_file == 0:
+		if precision == 4:
+				position_in_tap_file = random.randrange(1, 2)
+		if precision == 8:
+				position_in_tap_file = random.randrange(1, 16)
+		if precision == 12:
+				position_in_tap_file = random.randrange(1, 144)
+		if precision == 16:
+				position_in_tap_file = random.randrange(1, 2048)
+
 	# open tap file
 	filename = str(precision) + ".txt"
 	file = open(filename, "r")
@@ -57,6 +87,10 @@ def lfsr_SNG(precision, position_in_tap_file, seed):
 		if tap & (1 << t):
 			combination.append(t + 1)
 
+	if seed == 0:
+		# choose a random number
+		seed = random.randrange(1, pow(2,precision) - 1)
+
 	npseed = numpy.empty(0)
 	# build numpy array of binary from seed
 	for t in reversed(range(precision)):
@@ -68,7 +102,7 @@ def lfsr_SNG(precision, position_in_tap_file, seed):
 	# create LFSR
 	L = LFSR(combination, npseed)
 	# for maximal period, collect values
-	result = []
+	result = [0]
 	for t in range(pow(2, precision) - 1):
 		v = L.runKCycle(precision)
 		# convert v to int
@@ -78,7 +112,6 @@ def lfsr_SNG(precision, position_in_tap_file, seed):
 				value = value + pow(2, precision - i - 1)
 		result.append(value)
 
-	# convert v to an integer
 	# return maximal period array
 	return result
 
@@ -87,12 +120,13 @@ def lfsr_SNG(precision, position_in_tap_file, seed):
 # Added Oct 03 2018
 #
 # Parameters:
+#  precision: bit width
 #  stream_length: length, in bits, of the desired output bitstream
-#  number: the floating point number (0 <= n < 1) to represent as a bitstream
+#  input_number_float: the floating point number (0 <= n < 1) to represent as a bitstream
 #
-def unary_SNG(stream_length, number):
+def unary_SNG(precision, stream_length, input_number_float):
 	result = numpy.zeros(0)
-	compare2 = number * stream_length
+	compare2 = input_number_float * pow(2,precision)
 	for counter in range(stream_length):
 		compare1 = counter
 		if compare1 < compare2:
@@ -231,6 +265,18 @@ def to_float(bitstream):
 
 # Unit tests
 class bctTest(unittest.TestCase):
+	def test_multiply(self):
+		# multiply .25 * .25
+		n1 = unary_SNG(4, 16, .25)
+		n2 = lfsr_SNG(4, 16, .25, 1, 3)
+		n1 = clockdiv(1, n1, 2)
+		n2 = clockdiv(2, n2, 2)
+		print(n1)
+		print(n2)
+		result = and_op(n1, n2)
+		result_float = to_float(result)
+		print(result_float)
+
 	def test_clockdiv(self):
 		result = clockdiv(2, [1, 0, 0, 0], 2)
 		numpy.testing.assert_equal(result, [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
@@ -242,26 +288,26 @@ class bctTest(unittest.TestCase):
 		numpy.testing.assert_equal(result, [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1])
 
 	def test_unary_SNG(self):
-		result = unary_SNG(4, .75)
-		numpy.testing.assert_equal(result, [1, 1, 1, 0])
-		result = unary_SNG(8, .75)
-		numpy.testing.assert_equal(result, [1, 1, 1, 1, 1, 1, 0, 0])
-		result = unary_SNG(12, .75)
-		numpy.testing.assert_equal(result, [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0])
+		result = unary_SNG(4, 16, .75)
+		numpy.testing.assert_equal(result, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0])
+#		result = unary_SNG(8, 256, .75)
+#		numpy.testing.assert_equal(result, [1, 1, 1, 1, 1, 1, 0, 0])
+#		result = unary_SNG(12, 4096, .75)
+#		numpy.testing.assert_equal(result, [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0])
 
-		result = unary_SNG(4, .25)
-		numpy.testing.assert_equal(result, [1, 0, 0, 0])
-		result = unary_SNG(8, .25)
-		numpy.testing.assert_equal(result, [1, 1, 0, 0, 0, 0, 0, 0])
-		result = unary_SNG(12, .25)
-		numpy.testing.assert_equal(result, [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+#		result = unary_SNG(4, 16, .25)
+#		numpy.testing.assert_equal(result, [1, 0, 0, 0])
+#		result = unary_SNG(8, 256, .25)
+#		numpy.testing.assert_equal(result, [1, 1, 0, 0, 0, 0, 0, 0])
+#		result = unary_SNG(12, 4096, .25)
+#		numpy.testing.assert_equal(result, [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
-		result = unary_SNG(8, .125)
-		numpy.testing.assert_equal(result, [1, 0, 0, 0, 0, 0, 0, 0])
-		result = unary_SNG(16, .125)
-		numpy.testing.assert_equal(result, [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-		result = unary_SNG(24, .125)
-		numpy.testing.assert_equal(result, [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+#		result = unary_SNG(8, 256, .125)
+#		numpy.testing.assert_equal(result, [1, 0, 0, 0, 0, 0, 0, 0])
+#		result = unary_SNG(16, 65536, .125)
+#		numpy.testing.assert_equal(result, [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+#		result = unary_SNG(24, 16777216, .125)
+#		numpy.testing.assert_equal(result, [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
 	def test_rotate(self):
 		result = rotate(1, [1, 0, 0, 0], 1)
@@ -313,8 +359,7 @@ class bctTest(unittest.TestCase):
 		self.assertEqual(result, 3)
 		
 	def test_lfsr_sng(self):
-		result = lfsr_SNG(8, 1, 0x42)
-		print(result)
+		result = lfsr_SNG(8, 16, .25)
 
 # perform unit testing if no parameters specified (e.g. python bct.py)
 if __name__ == '__main__':
