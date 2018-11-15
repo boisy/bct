@@ -184,6 +184,7 @@ def rotate(order, bitstream, total_inputs):
 
 
 # Relatively prime
+# Added Nov 14 2018
 def relatively_prime(bitstream, entire_length):
 	result = numpy.zeros(0)
 	number_of_repeats = entire_length / len(bitstream)
