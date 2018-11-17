@@ -67,6 +67,8 @@ def lfsr_RNG(precision, position_in_tap_file, seed):
 	if position_in_tap_file == 0:
 		if precision == 4:
 				position_in_tap_file = random.randrange(1, 2)
+		if precision == 5:
+				position_in_tap_file = random.randrange(1, 6)
 		if precision == 8:
 				position_in_tap_file = random.randrange(1, 16)
 		if precision == 12:
@@ -299,6 +301,15 @@ class bctTest(unittest.TestCase):
 		n1 = unary_SNG(4, 16, .5)
 		n2 = lfsr_SNG(4, 16, .25, 1, 3)
 		n1 = clockdiv(1, n1, 2)
+		n2 = rotate(2, n2, 2)
+		result = and_op(n1, n2)
+		result_float = to_float(result)
+		self.assertEqual(result_float, .5 * .25)
+
+		# multiply .5 * .25
+		n1 = unary_SNG(4, 16, .5)
+		n2 = lfsr_SNG(4, 16, .25, 1, 3)
+		n1 = rotate(1, n1, 2)
 		n2 = rotate(2, n2, 2)
 		result = and_op(n1, n2)
 		result_float = to_float(result)
