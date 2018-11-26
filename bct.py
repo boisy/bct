@@ -148,20 +148,51 @@ def unary_SNG(precision, stream_length, input_number_float):
 #  bitstream: the bitstream to use
 #  total_inputs: the total number of inputs
 #
+# e.g. clockdiv(1, [1, 1, 1, 0], 2) -> [1, 1, 1, 0,  1, 1, 1, 0,  1, 1, 1, 0,  1, 1, 1, 0]
 # e.g. clockdiv(2, [1, 1, 1, 0], 2) -> [1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  0, 0, 0, 0]
+# e.g. clockdiv(1, [1, 0], 3) -> [1, 0, 1, 0, 1, 0, 1, 0]
+# e.g. clockdiv(2, [1, 0], 3) -> [1, 1, 0, 0, 1, 1, 0, 0]
+# e.g. clockdiv(3, [1, 0], 3) -> [1, 1, 1, 1, 0, 0, 0, 0]
 def clockdiv(order, bitstream, total_inputs):
 	result = numpy.zeros(0)
-	repeat_count = pow(len(bitstream), order - 1)
 	
 	for counter2 in range(len(bitstream)):
-		for counter3 in range(repeat_count):
-			bit = bitstream[counter2]
-			result = numpy.append(result, bit)
+		result = numpy.append(result, clockdiv_part(order, bitstream, total_inputs, counter2 + 1))
 		
 	entire_length = pow(len(bitstream), total_inputs)
 	while len(result) < entire_length:
 		result = numpy.append(result, result)
 
+	return result
+
+	
+# Clock division in parts
+# Extends a bitstream through clock division, but in parts
+#
+# Parameters:
+#  order: the operational order of the bitstream 
+#  bitstream: the bitstream to use
+#  total_inputs: the total number of inputs
+#  part: the part of the bitstream to return (1-len(bitstream))
+#
+# e.g. clockdiv_part(1, [1, 1, 1, 0], 2, 1) -> [1, 1, 1, 0]
+# e.g. clockdiv_part(2, [1, 1, 1, 0], 2, 1) -> [1, 1, 1, 1]
+# e.g. clockdiv_part(2, [1, 1, 1, 0], 2, 2) -> [1, 1, 1, 1]
+# e.g. clockdiv_part(2, [1, 1, 1, 0], 2, 3) -> [1, 1, 1, 1]
+# e.g. clockdiv_part(2, [1, 1, 1, 0], 2, 4) -> [0, 0, 0, 0]
+def clockdiv_part(order, bitstream, total_inputs, part):
+	result = numpy.zeros(0)
+	if order == 1:
+		for counter in range(len(bitstream)):
+			result = numpy.append(result, bitstream[counter])
+		return result
+
+	bit = bitstream[part - 1]
+	repeat_count = pow(len(bitstream), order - 1)
+	
+	for counter3 in range(repeat_count):
+		result = numpy.append(result, bit)
+		
 	return result
 	
 # Rotate the passed bitstream
@@ -278,7 +309,42 @@ def to_float(bitstream):
 
 # Unit tests
 class bctTest(unittest.TestCase):
-	def test_multiply(self):
+	def test_clockdiv(self):
+		result = clockdiv(1, [1, 1, 1, 0], 2)
+		numpy.testing.assert_equal(result, [1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0])
+		result = clockdiv(2, [1, 1, 1, 0], 2)
+		numpy.testing.assert_equal(result, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0])
+		result = clockdiv(2, [1, 0, 0, 1], 2)
+		numpy.testing.assert_equal(result, [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1])
+		result = clockdiv(1, [1, 0, 0, 1], 3)
+		numpy.testing.assert_equal(result, [
+		1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1,
+		1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1,
+		1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1,
+		1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1,
+		])
+		result = clockdiv(2, [1, 0, 0, 1], 3)
+		numpy.testing.assert_equal(result, [
+		1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+		1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+		1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+		1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1
+		])
+		result = clockdiv(3, [1, 0, 0, 1], 3)
+		numpy.testing.assert_equal(result, [
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		])
+		result = clockdiv(1, [1, 0], 3)
+		numpy.testing.assert_equal(result, [1, 0, 1, 0, 1, 0, 1, 0])
+		result = clockdiv(2, [1, 0], 3)
+		numpy.testing.assert_equal(result, [1, 1, 0, 0, 1, 1, 0, 0])
+		result = clockdiv(3, [1, 0], 3)
+		numpy.testing.assert_equal(result, [1, 1, 1, 1, 0, 0, 0, 0])
+
+	def xtest_multiply(self):
 		# multiply .25 * .25
 		n1 = unary_SNG(4, 16, .25)
 		n2 = lfsr_SNG(4, 16, .25, 1, 3)
@@ -315,22 +381,21 @@ class bctTest(unittest.TestCase):
 		result_float = to_float(result)
 		self.assertEqual(result_float, .5 * .25)
 
-	def test_clockdiv(self):
-		result = clockdiv(2, [1, 0, 0, 0], 2)
-		numpy.testing.assert_equal(result, [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-		result = clockdiv(1, [1, 1, 1, 0], 2)
-		numpy.testing.assert_equal(result, [1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0])
-		result = clockdiv(2, [1, 0, 0, 1], 2)
-		numpy.testing.assert_equal(result, [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1])
-		result = clockdiv(2, [1, 0, 0, 1], 3)
-		numpy.testing.assert_equal(result, [
-		1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
-		1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
-		1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
-		1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1
-		])
+	def xtest_clockdiv_part(self):
+		result = clockdiv_part(1, [1, 1, 1, 0], 2, 1)
+		numpy.testing.assert_equal(result, [1, 1, 1, 0])
+		result = clockdiv_part(1, [1, 1, 1, 0], 2, 2)
+		numpy.testing.assert_equal(result, [1, 1, 1, 0])
+		result = clockdiv_part(2, [1, 1, 1, 0], 2, 1)
+		numpy.testing.assert_equal(result, [1, 1, 1, 1])
+		result = clockdiv_part(2, [1, 1, 1, 0], 2, 2)
+		numpy.testing.assert_equal(result, [1, 1, 1, 1])
+		result = clockdiv_part(2, [1, 1, 1, 0], 2, 3)
+		numpy.testing.assert_equal(result, [1, 1, 1, 1])
+		result = clockdiv_part(2, [1, 1, 1, 0], 2, 4)
+		numpy.testing.assert_equal(result, [0, 0, 0, 0])
 
-	def test_unary_SNG(self):
+	def xtest_unary_SNG(self):
 		result = unary_SNG(4, 16, .75)
 		numpy.testing.assert_equal(result, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0])
 		result = unary_SNG(8, 256, .75)
@@ -395,7 +460,7 @@ class bctTest(unittest.TestCase):
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		])
 
-	def test_rotate(self):
+	def xtest_rotate(self):
 		result = rotate(1, [1, 0, 0, 0], 1)
 		numpy.testing.assert_equal(result, [1, 0, 0, 0])
 		result = rotate(1, [1, 0, 0, 0], 3)
