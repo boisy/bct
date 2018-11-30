@@ -1,5 +1,4 @@
 # Performance test
-import multiprocessing as mp
 import time
 import timeit
 import unittest
@@ -43,116 +42,98 @@ def multiply(n1, n2):
  
 
 class bctTest(unittest.TestCase):
-	def test_multiply(self):
-# Measure multiplication of five 8 bit streams (result is 8^5 bits long)
-		for part in range(1, 5):
-			start = time.time()
-			n1 = bct.unary_SNG(4, 16, .25)
-			end = time.time()
-			print("n1 = bct.unary_SNG : ", end - start, 'seconds')
+	def test_multiply_five_8bitstreams(self):
+		# Measure multiplication of five 8 bit streams (result is 8^5 bits long)
+		accumulated_result = numpy.zeros(0)
+		epsilon = .01
 
-			start = time.time()
-			n2 = bct.lfsr_SNG(4, 16, .25, 1, 3)
-			end = time.time()
-			print("n2 = bct.lfsr_SNG : ", end - start, 'seconds')
-
-			start = time.time()
-			n3 = bct.lfsr_SNG(4, 16, .5, 1, 3)
-			end = time.time()
-			print("n3 = bct.lfsr_SNG : ", end - start, 'seconds')
-
-			start = time.time()
-			n4 = bct.lfsr_SNG(4, 16, .5, 1, 3)
-			end = time.time()
-			print("n4 = bct.lfsr_SNG : ", end - start, 'seconds')
-
-			start = time.time()
-			n5 = bct.lfsr_SNG(4, 16, .25, 1, 3)
-			end = time.time()
-			print("n5 = bct.lfsr_SNG : ", end - start, 'seconds')
-
-			epsilon = .0001
-			accumulated_result = numpy.zeros(0)
-
-			start = time.time()
-			n1 = bct.clockdiv_part(1, n1, 5, part)
-			end = time.time()
-			print("n1 = bct.clockdiv : ", end - start, 'seconds')
-	
-			start = time.time()
-			n2 = bct.clockdiv_part(2, n2, 5, part)
-			end = time.time()
-			print("n2 = bct.clockdiv : ", end - start, 'seconds')
-	
-			start = time.time()
-			n3 = bct.clockdiv_part(3, n3, 5, part)
-			end = time.time()
-			print("n3 = bct.clockdiv : ", end - start, 'seconds')
-	
-			start = time.time()
-			n4 = bct.clockdiv_part(4, n4, 5, part)
-			end = time.time()
-			print("n4 = bct.clockdiv : ", end - start, 'seconds')
-	
-			start = time.time()
-			n5 = bct.clockdiv_part(5, n5, 5, part)
-			end = time.time()
-			print("n5 = bct.clockdiv : ", end - start, 'seconds')
-
-			print("n1Xn2 = n1 x n2")
-			n1Xn2 = bct.and_op(n1, n2)
-			print("n1Xn2Xn3 = n1Xn2 x n3")
-			n1Xn2Xn3 = bct.and_op(n1Xn2, n3)
-			print("n1Xn2Xn3Xn4 = n1Xn2Xn3 x n4")
-			n1Xn2Xn3Xn4 = bct.and_op(n1Xn2Xn3, n4)
-			print("n1Xn2Xn3Xn4Xn5 = n1Xn2Xn3Xn4 x n5")
-			n1Xn2Xn3Xn4Xn5 = bct.and_op(n1Xn2Xn3Xn4, n5)
-			end = time.time()
-
-			accumulated_result = numpy.append(accumulated_result, n1Xn2Xn3Xn4Xn5)
-			result_float = bct.to_float(accumulated_result)
-			print(end - start, 'seconds')
-
-			true_result = .25 * .25 * .5 * .5 * .25
-			if abs(result_float - true_result) < epsilon:
-				print("result is within error.")
-				return
-
-#			self.assertEqual(result_float, .25 * .25 * .5 * .5 * .25)
-
-	def XXXtest_multiply_parallel(self):
-		output = mp.Queue()
-		start = time.time()
 		n1 = bct.unary_SNG(4, 16, .25)
 		n2 = bct.lfsr_SNG(4, 16, .25, 1, 3)
 		n3 = bct.lfsr_SNG(4, 16, .5, 1, 3)
 		n4 = bct.lfsr_SNG(4, 16, .5, 1, 3)
-		n1 = bct.clockdiv(1, n1, 4)
-		n2 = bct.clockdiv(2, n2, 4)
-		n3 = bct.clockdiv(3, n3, 4)
-		n4 = bct.clockdiv(4, n4, 4)
-#		processes = [mp.Process(target=multiply, args=(n1, n2)) for x in range(2)]
-		processes = []
-		t = mp.Process(target=multiply, args=(n1, n2))
-		processes.append(t)
-		t = mp.Process(target=multiply, args=(n3, n4))
-		processes.append(t)
-		for p in processes:
-			p.start()
+		n5 = bct.lfsr_SNG(4, 16, .25, 1, 3)
 
-		# Exit the completed processes
-		for p in processes:
-			p.join()
+		for part in range(1, 17):
+			start = time.time()
+			cdn1 = bct.clockdiv_part(1, n1, 5, part)
+			end = time.time()
+			print("n1 = bct.clockdiv : ", end - start, 'seconds, n1 =', n1, ', len(n1) =', len(cdn1))
+	
+			start = time.time()
+			cdn2 = bct.clockdiv_part(2, n2, 5, part)
+			end = time.time()
+			print("n2 = bct.clockdiv : ", end - start, 'seconds, n2 =', n2, ', len(n2) =', len(cdn2))
+	
+			start = time.time()
+			cdn3 = bct.clockdiv_part(3, n3, 5, part)
+			end = time.time()
+			print("n3 = bct.clockdiv : ", end - start, 'seconds, n3 =', n3, ', len(n3) =', len(cdn3))
+	
+			start = time.time()
+			cdn4 = bct.clockdiv_part(4, n4, 5, part)
+			end = time.time()
+			print("n4 = bct.clockdiv : ", end - start, 'seconds, n4 =', n4, ', len(n4) =', len(cdn4))
+	
+			start = time.time()
+			cdn5 = bct.clockdiv_part(5, n5, 5, part)
+			end = time.time()
+			print("n5 = bct.clockdiv : ", end - start, 'seconds, n5 =', n5, ', len(n5) =', len(cdn5))
 
-		# Get process results from the output queue
-#		results = [output.get() for p in processes]
+			n1Xn2 = bct.and_op(cdn1, cdn2)
+			print("n1Xn2 = n1 x n2 = ", n1Xn2)
+			n1Xn2Xn3 = bct.and_op(n1Xn2, cdn3)
+			print("n1Xn2Xn3 = n1Xn2 x n3 = ", n1Xn2Xn3)
+			n1Xn2Xn3Xn4 = bct.and_op(n1Xn2Xn3, cdn4)
+			print("n1Xn2Xn3Xn4 = n1Xn2Xn3 x n4 = ", n1Xn2Xn3Xn4)
+			n1Xn2Xn3Xn4Xn5 = bct.and_op(n1Xn2Xn3Xn4, cdn5)
+			print("n1Xn2Xn3Xn4Xn5 = n1Xn2Xn3Xn4 x n5 = ", n1Xn2Xn3Xn4Xn5)
+			end = time.time()
+			print(end - start, 'seconds')
 
-		for p in processes:
-			p.print()
-		end = time.time()
-		print(end - start, 'seconds')
+			accumulated_result = numpy.append(accumulated_result, n1Xn2Xn3Xn4Xn5)
+			result_float = bct.to_float(accumulated_result)
 
+			true_result = .25 * .25 * .5 * .5 * .25
+			error = abs(result_float - true_result)
+			print("true_result = ", true_result, ", result_float = ", result_float, ", error = ", error)
+			if error < epsilon:
+				print("result is within error.")
+				return
+		
+#			self.assertEqual(result_float, .25 * .25 * .5 * .5 * .25)
 
+	def test_multiply_two_4bitstreams(self):
+		# Measure multiplication of two 4 bit streams (result is 4^2 bits long)
+		accumulated_result = numpy.zeros(0)
+		epsilon = .00000001
+
+		term1 = .25
+		term2 = .25
+		n1 = bct.unary_SNG(4, 16, term1)
+		n2 = bct.lfsr_SNG(4, 16, term2, 1, 1)
+
+		print("n1 = ", n1, ", n2 = ", n2)
+
+		for part in range(1, 15):
+			cdn1 = bct.clockdiv_part(1, n1, 2, part)
+			print("cdn1 = ", cdn1)
+	
+			cdn2 = bct.clockdiv_part(2, n2, 2, part)
+			print("cdn2 = ", cdn2)
+	
+			n1Xn2 = bct.and_op(cdn1, cdn2)
+			print("n1Xn2 = n1 x n2 = ", n1Xn2)
+
+			accumulated_result = numpy.append(accumulated_result, n1Xn2)
+			result_float = bct.to_float(accumulated_result)
+
+			true_result = term1 * term2
+			error = abs(result_float - true_result)
+			print("true_result = ", true_result, ", result_float = ", result_float, ", error = ", error)
+			if error < epsilon:
+				print("result is within error.")
+				return
+		
 # perform unit testing if no parameters specified (e.g. python bct.py)
 if __name__ == '__main__':
         unittest.main()
