@@ -141,15 +141,15 @@ def unary_SNG(precision, stream_length, input_number_float):
 	return result
 
 # Clock division method that returns one bit
-# This method returns the bit (0 or 1) at position 'pos' (1 <= pos <= pow(len(bitstream), total_inputs))
-def clockdiv_bit(order, bitstream, total_inputs, pos):
+# This method returns the bit (0 or 1) at position 'offset' (1 <= pos <= pow(len(bitstream), total_inputs))
+def clockdiv_bit(order, bitstream, total_inputs, offset):
 	total_length = pow(len(bitstream), total_inputs)
-	# check if pos is valid
-	if (pos > total_length):
+	# check if offset is valid
+	if (offset > total_length):
 		raise Exception('Out of range')
 	# determine repeat count
 	repeat = pow(len(bitstream), order - 1)
-	bit_offset = int((pos - 1) / repeat)
+	bit_offset = int((offset - 1) / repeat)
 	bit_offset = bit_offset % len(bitstream)
 	return bitstream[bit_offset]
 
@@ -161,6 +161,9 @@ def clockdiv_bits(order, bitstream, total_inputs, offset, length):
 
 # Clock division method
 # This method returns the clock divided bitstream based on its order and total inputs
+#   order: the order of the operation (1, 2, 3, ...)
+#   bitstream: the bitstream to clock divide
+#   total_inputs: the total number of inputs in the operation
 def clockdiv(order, bitstream, total_inputs):
 	result = numpy.zeros(0)
 

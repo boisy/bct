@@ -37,12 +37,13 @@ class bctTest(unittest.TestCase):
 
 	
 		# compute 'segment_length' bits at a time
-		segment_length = bitstream_length
+		segment_length = int(bitstream_length / 2)
 		for segment in range(1, segment_length + 1):
 			expanded_terms = []
-			segment_start_bit = bitstream_length * (segment - 1)
+			segment_start_bit = segment_length * segment
 			for j in range(number_of_terms):
-				segment_offset = (segment - 1) * segment_length
+				segment_offset = (segment - 1) * segment_length + 1
+				print(segment_offset)
 				cdterm = bct.clockdiv_bits(j + 1, encoded_terms[j], number_of_terms, segment_offset, segment_length)
 				expanded_terms.append(cdterm)
 			result = numpy.ones(segment_length)
@@ -52,16 +53,16 @@ class bctTest(unittest.TestCase):
 			print("result =", result)
 
 			accumulated_result = accumulated_result + bct.number_of_1(result)
-			accumulated_result_length += bitstream_length
+			accumulated_result_length += segment_length
 			result_float = accumulated_result / accumulated_result_length
 
 			error = abs(result_float - true_result)
 			print("True result = ", true_result, ", result_float = ", result_float, " (", accumulated_result, "/", accumulated_result_length, "), error = ", error)
 			if error <= epsilon:
-				print("result is within error after", accumulated_result_length, "bits (", int(accumulated_result_length / bitstream_length), "tries ).")
+				print("result is within error after", accumulated_result_length, "bits (", int(accumulated_result_length / segment_length), "tries ).")
 				return
 			else:
-				print("not accurate enough with", accumulated_result_length, "bits... try with", bitstream_length, "more bits.")
+				print("not accurate enough with", accumulated_result_length, "bits... try with", segment_length, "more bits.")
 
 
 
