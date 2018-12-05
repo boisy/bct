@@ -5,7 +5,7 @@ import unittest
 import numpy
 
 import bct
-
+import clockdiv as cd
 
 #iterations = 10000
 #for n in range(1, iterations):
@@ -53,39 +53,50 @@ class bctTest(unittest.TestCase):
 		n4 = bct.lfsr_SNG(4, 16, .5, 1, 3)
 		n5 = bct.lfsr_SNG(4, 16, .25, 1, 3)
 
+		cdn1 = cd.clockdiv(1, n1, 5)
+		print(cdn1.info())
+		cdn2 = cd.clockdiv(2, n2, 5)
+		print(cdn2.info())
+		cdn3 = cd.clockdiv(3, n3, 5)
+		print(cdn3.info())
+		cdn4 = cd.clockdiv(4, n4, 5)
+		print(cdn4.info())
+		cdn5 = cd.clockdiv(5, n5, 5)
+		print(cdn5.info())
+
 		for part in range(1, 17):
 			start = time.time()
-			cdn1 = bct.clockdiv_part(1, n1, 5, part)
 			end = time.time()
-			print("n1 = bct.clockdiv : ", end - start, 'seconds, n1 =', n1, ', len(n1) =', len(cdn1))
+			n1 = cdn1.pulse(part)
+			print("n1 = cd.clockdiv : ", end - start, 'seconds, n1 =', n1, ', len(n1) =', len(cdn1))
 	
 			start = time.time()
-			cdn2 = bct.clockdiv_part(2, n2, 5, part)
+			n2 = cdn2.pulse(part)
 			end = time.time()
-			print("n2 = bct.clockdiv : ", end - start, 'seconds, n2 =', n2, ', len(n2) =', len(cdn2))
+			print("n2 = cd.clockdiv : ", end - start, 'seconds, n2 =', n2, ', len(n2) =', len(cdn2))
 	
 			start = time.time()
-			cdn3 = bct.clockdiv_part(3, n3, 5, part)
+			n3 = cdn3.pulse(part)
 			end = time.time()
-			print("n3 = bct.clockdiv : ", end - start, 'seconds, n3 =', n3, ', len(n3) =', len(cdn3))
+			print("n3 = cd.clockdiv : ", end - start, 'seconds, n3 =', n3, ', len(n3) =', len(cdn3))
 	
 			start = time.time()
-			cdn4 = bct.clockdiv_part(4, n4, 5, part)
+			n4 = cdn4.pulse(part)
 			end = time.time()
-			print("n4 = bct.clockdiv : ", end - start, 'seconds, n4 =', n4, ', len(n4) =', len(cdn4))
+			print("n4 = cd.clockdiv : ", end - start, 'seconds, n4 =', n4, ', len(n4) =', len(cdn4))
 	
 			start = time.time()
-			cdn5 = bct.clockdiv_part(5, n5, 5, part)
+			n5 = cdn5.pulse(part)
 			end = time.time()
-			print("n5 = bct.clockdiv : ", end - start, 'seconds, n5 =', n5, ', len(n5) =', len(cdn5))
+			print("n5 = cd.clockdiv : ", end - start, 'seconds, n5 =', n5, ', len(n5) =', len(cdn5))
 
-			n1Xn2 = bct.and_op(cdn1, cdn2)
+			n1Xn2 = bct.and_op(n1, n2)
 			print("n1Xn2 = n1 x n2 = ", n1Xn2)
-			n1Xn2Xn3 = bct.and_op(n1Xn2, cdn3)
+			n1Xn2Xn3 = bct.and_op(n1Xn2, n3)
 			print("n1Xn2Xn3 = n1Xn2 x n3 = ", n1Xn2Xn3)
-			n1Xn2Xn3Xn4 = bct.and_op(n1Xn2Xn3, cdn4)
+			n1Xn2Xn3Xn4 = bct.and_op(n1Xn2Xn3, n4)
 			print("n1Xn2Xn3Xn4 = n1Xn2Xn3 x n4 = ", n1Xn2Xn3Xn4)
-			n1Xn2Xn3Xn4Xn5 = bct.and_op(n1Xn2Xn3Xn4, cdn5)
+			n1Xn2Xn3Xn4Xn5 = bct.and_op(n1Xn2Xn3Xn4, n5)
 			print("n1Xn2Xn3Xn4Xn5 = n1Xn2Xn3Xn4 x n5 = ", n1Xn2Xn3Xn4Xn5)
 			end = time.time()
 			print(end - start, 'seconds')
@@ -114,14 +125,17 @@ class bctTest(unittest.TestCase):
 
 		print("n1 = ", n1, ", n2 = ", n2)
 
+		cdn1 = cd.clockdiv_part(1, n1, 2)
+		cdn2 = cd.clockdiv_part(2, n2, 2)
+
 		for part in range(1, 15):
-			cdn1 = bct.clockdiv_part(1, n1, 2, part)
-			print("cdn1 = ", cdn1)
+			n1 = cdn1.pulse(part)
+			print("n1 = ", n1)
 	
-			cdn2 = bct.clockdiv_part(2, n2, 2, part)
-			print("cdn2 = ", cdn2)
+			n2 = cdn2.pulse(part)
+			print("n2 = ", n2)
 	
-			n1Xn2 = bct.and_op(cdn1, cdn2)
+			n1Xn2 = cd.and_op(n1, n2)
 			print("n1Xn2 = n1 x n2 = ", n1Xn2)
 
 			accumulated_result = numpy.append(accumulated_result, n1Xn2)

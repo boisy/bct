@@ -140,6 +140,16 @@ def unary_SNG(precision, stream_length, input_number_float):
 			result = numpy.append(result, 0)
 	return result
 
+def clockdiv_bit(pos, bs, term_count, n):
+	# check if n is valid
+	total_length = pow(len(bs), term_count)
+	if (n > total_length):
+		raise Exception('Out of range')
+	repeat = pow(len(bs), pos-1)
+	noff = int((n - 1) / repeat)
+	noff = noff % len(bs)
+	return bs[noff]
+
 # Clock division method
 # Extends a bitstream through clock divison
 #
@@ -171,10 +181,9 @@ def clockdiv_brute(order, bitstream, total_inputs):
 def clockdiv(order, bitstream, total_inputs):
 	result = numpy.zeros(0)
 
-	repeat_count = pow(len(bitstream), order - 1)
-	print(repeat_count)
-	for n in range(1, repeat_count + 1):
-		result = numpy.append(result, clockdiv_part(order, bitstream, total_inputs, n))
+	entire_length = pow(len(bitstream), total_inputs)
+	for i in range(1, entire_length + 1):
+		result = numpy.append(result, clockdiv_bit(order, bitstream, total_inputs, i))
 
 	return result
 
