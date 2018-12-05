@@ -3,13 +3,20 @@ import time
 import timeit
 import unittest
 import numpy
+import logging, sys
 
 import bct
 
 # Use substreams to minimize the impact of the bitstreams on RAM, and at the same time, compute them piecemeal to see if they fall within our desired accuracy.
 class bctTest(unittest.TestCase):
-	def test_multiply_n_bitstreams(self):
-		terms = [.25, .5]
+	def Xtest_multiply_2_bitstreams(self):
+		self.multiply([.25, .5], 4, 16, 0.0)
+
+	def test_multiply_3_bitstreams(self):
+		self.multiply([.25, .5, .5], 4, 16, 0.0)
+	
+	def multiply(self, terms, precision, bitstream_length, epsilon, debug = 0):
+		logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 		encoded_terms = []
 		number_of_terms = len(terms)
 		true_result = 1.0
@@ -18,14 +25,10 @@ class bctTest(unittest.TestCase):
 
 		accumulated_result = 0
 		accumulated_result_length = 0
-		epsilon = 0.0
 
-		precision = 4
-		bitstream_length = pow(2, precision)
-
-		print("Multiply", number_of_terms, "terms:", terms)
-		print("Precision =", precision, ", bitstream length =", bitstream_length)
-		print("=====================================================")
+		logging.info("Multiply %d terms: %s", number_of_terms, terms)
+		logging.info("Precision = %d, bitstream length = %d", precision, bitstream_length)
+		logging.info("=====================================================")
 
 		# use appropriate SNG for encoding floating point terms
 		for i in range(number_of_terms):
@@ -37,32 +40,31 @@ class bctTest(unittest.TestCase):
 
 	
 		# compute 'segment_length' bits at a time
-		segment_length = int(bitstream_length / 2)
+		segment_length = bitstream_length
 		for segment in range(1, segment_length + 1):
 			expanded_terms = []
 			segment_start_bit = segment_length * segment
 			for j in range(number_of_terms):
 				segment_offset = (segment - 1) * segment_length + 1
-				print(segment_offset)
 				cdterm = bct.clockdiv_bits(j + 1, encoded_terms[j], number_of_terms, segment_offset, segment_length)
 				expanded_terms.append(cdterm)
 			result = numpy.ones(segment_length)
 			for i in range(number_of_terms):
-				print("term", i + 1, "=", expanded_terms[i])
+				logging.info("term %d = %s", i + 1, expanded_terms[i])
 				result = bct.and_op(result, expanded_terms[i])
-			print("result =", result)
+			logging.info("result = %s", result)
 
 			accumulated_result = accumulated_result + bct.number_of_1(result)
 			accumulated_result_length += segment_length
 			result_float = accumulated_result / accumulated_result_length
 
 			error = abs(result_float - true_result)
-			print("True result = ", true_result, ", result_float = ", result_float, " (", accumulated_result, "/", accumulated_result_length, "), error = ", error)
+			logging.info("True result = %f, result_float = %f (%d/%d), error = %f", true_result, result_float, accumulated_result, accumulated_result_length, error)
 			if error <= epsilon:
-				print("result is within error after", accumulated_result_length, "bits (", int(accumulated_result_length / segment_length), "tries ).")
+				logging.info("result is within error after %d bits (%d tries)", accumulated_result_length, int(accumulated_result_length / segment_length))
 				return
 			else:
-				print("not accurate enough with", accumulated_result_length, "bits... try with", segment_length, "more bits.")
+				logging.info("not accurate enough with %d bits", accumulated_result_length)
 
 
 
@@ -92,7 +94,6 @@ class bctTest(unittest.TestCase):
 			major = bitstream_length * (part - 1)
 			for i in range(1, bitstream_length + 1):
 				offset = major + i
-#				print(offset)
 				cdn1 = numpy.append(cdn1, bct.clockdiv_bit(1, n1, 2, offset))
 				cdn2 = numpy.append(cdn2, bct.clockdiv_bit(2, n2, 2, offset))
 
