@@ -8,7 +8,65 @@ import bct
 
 # Use substreams to minimize the impact of the bitstreams on RAM, and at the same time, compute them piecemeal to see if they fall within our desired accuracy.
 class bctTest(unittest.TestCase):
-	def test_multiply_two_bitstreams(self):
+	def test_multiply_n_bitstreams(self):
+		terms = [.5, .5]
+		encoded_terms = []
+		number_of_terms = len(terms)
+		true_result = 1.0
+		for t in terms:
+			true_result *= t
+
+		accumulated_result = 0
+		accumulated_result_length = 0
+		epsilon = 0.0
+
+		precision = 4
+		bitstream_length = pow(2, precision)
+
+		print("Multiply", number_of_terms, "terms:", terms)
+		print("Precision =", precision, ", bitstream length =", bitstream_length)
+		print("True result is", true_result)
+		print("=====================================================")
+
+		for i in range(number_of_terms):
+			term = terms[i]
+			if i == 0:
+				encoded_terms.append(bct.unary_SNG(precision, bitstream_length, term))
+			else:	
+				encoded_terms.append(bct.lfsr_SNG(precision, bitstream_length, term))
+
+		for part in range(1, bitstream_length + 1):
+			expanded_terms = []
+			for i in range(number_of_terms):
+				expanded_terms.append(numpy.zeros(0))
+			major = bitstream_length * (part - 1)
+			for i in range(1, bitstream_length + 1):
+				offset = major + i
+				result = numpy.ones(bitstream_length)
+				for j in range(number_of_terms):
+					expanded_terms[j] = numpy.append(expanded_terms[j], bct.clockdiv_bit(j + 1, encoded_terms[j], number_of_terms, offset)) 		
+			result = numpy.ones(len(expanded_terms[0]))
+			for i in range(number_of_terms):
+				print("term", i + 1, "=", expanded_terms[i])
+				result = bct.and_op(result, expanded_terms[i])
+			print("result =", result)
+
+			accumulated_result = accumulated_result + bct.number_of_1(result)
+			accumulated_result_length += bitstream_length
+			result_float = accumulated_result / accumulated_result_length
+
+			error = abs(result_float - true_result)
+			print("true_result = ", true_result, ", result_float = ", result_float, ", error = ", error)
+			if error <= epsilon:
+				print("result is within error after", accumulated_result_length, "bits.")
+				return
+			else:
+				print("not accurate enough with", accumulated_result_length, "bits... try with", bitstream_length, "more bits.")
+
+
+
+
+	def XXXtest_multiply_two_bitstreams(self):
 		# Measure multiplication of two bit streams
 		accumulated_result = 0
 		accumulated_result_length = 0
