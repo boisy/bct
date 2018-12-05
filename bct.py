@@ -140,44 +140,27 @@ def unary_SNG(precision, stream_length, input_number_float):
 			result = numpy.append(result, 0)
 	return result
 
-def clockdiv_bit(pos, bs, term_count, n):
-	# check if n is valid
-	total_length = pow(len(bs), term_count)
-	if (n > total_length):
+# Clock division method that returns one bit
+# This method returns the bit (0 or 1) at position 'pos' (1 <= pos <= pow(len(bitstream), total_inputs))
+def clockdiv_bit(order, bitstream, total_inputs, pos):
+	total_length = pow(len(bitstream), total_inputs)
+	# check if pos is valid
+	if (pos > total_length):
 		raise Exception('Out of range')
-	repeat = pow(len(bs), pos-1)
-	noff = int((n - 1) / repeat)
-	noff = noff % len(bs)
-	return bs[noff]
+	# determine repeat coun
+	repeat = pow(len(bitstream), order - 1)
+	bit_offset = int((pos - 1) / repeat)
+	bit_offset = bit_offset % len(bitstream)
+	return bitstream[bit_offset]
 
-# Clock division method
-# Extends a bitstream through clock divison
-#
-# Parameters:
-#  order: the operational order of the bitstream 
-#  bitstream: the bitstream to use
-#  total_inputs: the total number of inputs
-#
-# e.g. clockdiv(1, [1, 1, 1, 0], 2) -> [1, 1, 1, 0,  1, 1, 1, 0,  1, 1, 1, 0,  1, 1, 1, 0]
-# e.g. clockdiv(2, [1, 1, 1, 0], 2) -> [1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  0, 0, 0, 0]
-# e.g. clockdiv(1, [1, 0], 3) -> [1, 0, 1, 0, 1, 0, 1, 0]
-# e.g. clockdiv(2, [1, 0], 3) -> [1, 1, 0, 0, 1, 1, 0, 0]
-# e.g. clockdiv(3, [1, 0], 3) -> [1, 1, 1, 1, 0, 0, 0, 0]
-def clockdiv_brute(order, bitstream, total_inputs):
+def clockdiv_bits(order, bitstream, total_inputs, offset, length):
 	result = numpy.zeros(0)
+	for i in range(offset, offset + length):
+		result = numpy.append(result, clockdiv_bit(order, bitstream, total_inputs, i))
+	return result	
 
-	repeat_count = pow(2, order - 1)
-	for b in range(len(bitstream)):
-		bit = bitstream[b]
-		for counter in range(repeat_count):
-			result = numpy.append(result, bit)
-
-	entire_length = pow(len(bitstream), total_inputs)
-	while len(result) < entire_length:
-		result = numpy.append(result, result)
-
-	return result
-
+# Clock divison method
+# This method returns the clock divided bitstream based on its order and total inputs
 def clockdiv(order, bitstream, total_inputs):
 	result = numpy.zeros(0)
 
@@ -186,83 +169,6 @@ def clockdiv(order, bitstream, total_inputs):
 		result = numpy.append(result, clockdiv_bit(order, bitstream, total_inputs, i))
 
 	return result
-
-# Clock division in parts
-# Extends a bitstream through clock division, but in parts
-#
-# Parameters:
-#  order: the operational order of the bitstream 
-#  bitstream: the bitstream to use
-#  total_inputs: the total number of inputs
-#  part: the part of the bitstream to return (1 to len(bitstream))
-#
-# e.g. clockdiv(1, [1, 0], 3) -> [1, 0, 1, 0, 1, 0, 1, 0]
-# e.g. clockdiv(2, [1, 0], 3) -> [1, 1, 0, 0, 1, 1, 0, 0]
-# e.g. clockdiv(3, [1, 0], 3) -> [1, 1, 1, 1, 0, 0, 0, 0]
-#
-# e.g. clockdiv(1, [1, 0], 4) -> [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
-# e.g. clockdiv(2, [1, 0], 4) -> [1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0]
-# e.g. clockdiv(3, [1, 0], 4) -> [1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0]
-# e.g. clockdiv(4, [1, 0], 4) -> [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0]
-#
-# e.g. clockdiv_part(1, [1, 0], 3, 1) -> [1, 0]
-# e.g. clockdiv_part(2, [1, 0], 3, 1) -> [1, 1]
-# e.g. clockdiv_part(2, [1, 0], 3, 2) -> [0, 0]
-# e.g. clockdiv_part(2, [1, 0], 3, 3) -> [1, 1]
-# e.g. clockdiv_part(2, [1, 0], 3, 4) -> [0, 0]
-# e.g. clockdiv_part(3, [1, 0], 3, 1) -> [1, 1]
-# e.g. clockdiv_part(3, [1, 0], 3, 2) -> [1, 1]
-# e.g. clockdiv_part(3, [1, 0], 3, 3) -> [0, 0]
-# e.g. clockdiv_part(3, [1, 0], 3, 4) -> [0, 0]
-#
-# e.g. clockdiv_part(1, [1, 0], 2, 1) -> [1, 0]
-# e.g. clockdiv_part(1, [1, 0], 2, 2) -> [1, 0]
-# e.g. clockdiv_part(2, [1, 0], 2, 1) -> [1, 1]
-# e.g. clockdiv_part(2, [1, 0], 2, 2) -> [0, 0]
-# e.g. clockdiv(1, [1, 1, 1, 0], 2) -> [1, 1, 1, 0,  1, 1, 1, 0,  1, 1, 1, 0,  1, 1, 1, 0]
-# e.g. clockdiv(2, [1, 1, 1, 0], 2) -> [1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  0, 0, 0, 0]
-# e.g. clockdiv_part(1, [1, 1, 1, 0], 2, 1) -> [1, 1, 1, 0]
-# e.g. clockdiv_part(2, [1, 1, 1, 0], 2, 1) -> [1, 1, 1, 1]
-# e.g. clockdiv_part(2, [1, 1, 1, 0], 2, 2) -> [1, 1, 1, 1]
-# e.g. clockdiv_part(2, [1, 1, 1, 0], 2, 3) -> [1, 1, 1, 1]
-# e.g. clockdiv_part(2, [1, 1, 1, 0], 2, 4) -> [0, 0, 0, 0]
-def clockdiv_part_brute(order, bitstream, total_inputs, part):
-	result = numpy.zeros(0)
-
-	number_of_parts = pow(len(bitstream), total_inputs - 1)
-	if (part > number_of_parts):
-		return result
-
-	repeat_count = pow(2, order - 1)
-	for b in range(len(bitstream)):
-		bit = bitstream[b]
-		for counter in range(repeat_count):
-			result = numpy.append(result, bit)
-
-	entire_length = pow(len(bitstream), total_inputs)
-	while len(result) < entire_length:
-		result = numpy.append(result, result)
-
-	offset = (part - 1) * len(bitstream)
-	l = offset + len(bitstream)
-
-	return result[offset:l]
-
-def clockdiv_part(order, bitstream, total_inputs, part):
-	result = numpy.zeros(0)
-
-	# build up the expanded bitstream
-	repeat_count = pow(2, order - 1)
-	for b in range(len(bitstream)):
-		bit = bitstream[b]
-		for counter in range(repeat_count):
-			result = numpy.append(result, bit)
-
-	# find the offset within the expanded bitstream and return len(bitstream) bits there
-	offset = (part - 1) * len(bitstream)
-	modvalue = len(result)
-	offset = offset % modvalue
-	return result[offset:offset + len(bitstream)]
 
 # Rotate the passed bitstream
 #
@@ -419,7 +325,7 @@ class bctTest(unittest.TestCase):
 		result = clockdiv(3, [1, 0], 3)
 		numpy.testing.assert_equal(result, [1, 1, 1, 1, 0, 0, 0, 0])
 
-	def xtest_multiply(self):
+	def test_multiply(self):
 		# multiply .25 * .25
 		n1 = unary_SNG(4, 16, .25)
 		n2 = lfsr_SNG(4, 16, .25, 1, 3)
@@ -456,21 +362,7 @@ class bctTest(unittest.TestCase):
 		result_float = to_float(result)
 		self.assertEqual(result_float, .5 * .25)
 
-	def xtest_clockdiv_part(self):
-		result = clockdiv_part(1, [1, 1, 1, 0], 2, 1)
-		numpy.testing.assert_equal(result, [1, 1, 1, 0])
-		result = clockdiv_part(1, [1, 1, 1, 0], 2, 2)
-		numpy.testing.assert_equal(result, [1, 1, 1, 0])
-		result = clockdiv_part(2, [1, 1, 1, 0], 2, 1)
-		numpy.testing.assert_equal(result, [1, 1, 1, 1])
-		result = clockdiv_part(2, [1, 1, 1, 0], 2, 2)
-		numpy.testing.assert_equal(result, [1, 1, 1, 1])
-		result = clockdiv_part(2, [1, 1, 1, 0], 2, 3)
-		numpy.testing.assert_equal(result, [1, 1, 1, 1])
-		result = clockdiv_part(2, [1, 1, 1, 0], 2, 4)
-		numpy.testing.assert_equal(result, [0, 0, 0, 0])
-
-	def xtest_unary_SNG(self):
+	def test_unary_SNG(self):
 		result = unary_SNG(4, 16, .75)
 		numpy.testing.assert_equal(result, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0])
 		result = unary_SNG(8, 256, .75)
@@ -535,7 +427,7 @@ class bctTest(unittest.TestCase):
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		])
 
-	def xtest_rotate(self):
+	def test_rotate(self):
 		result = rotate(1, [1, 0, 0, 0], 1)
 		numpy.testing.assert_equal(result, [1, 0, 0, 0])
 		result = rotate(1, [1, 0, 0, 0], 3)
