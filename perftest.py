@@ -41,90 +41,46 @@ def multiply(n1, n2):
  
 
 class bctTest(unittest.TestCase):
-	def XXXtest_multiply_five_8bitstreams(self):
-		# Measure multiplication of five 8 bit streams (result is 8^5 bits long)
-		accumulated_result = numpy.zeros(0)
-		epsilon = .01
+	def test_multiply_two_bitstreams(self):
+		# Measure multiplication of two bit streams
+		accumulated_result = 0
+		accumulated_result_length = 0
+		epsilon = 0.0
 
-		n1 = bct.unary_SNG(4, 16, .25)
-		n2 = bct.lfsr_SNG(4, 16, .25, 1, 3)
-		n3 = bct.lfsr_SNG(4, 16, .5, 1, 3)
-		n4 = bct.lfsr_SNG(4, 16, .5, 1, 3)
-		n5 = bct.lfsr_SNG(4, 16, .25, 1, 3)
+		precision = 4
+		bitstream_length = pow(2, precision)
 
-		for part in range(1, 17):
-			cdn1 = numpy.zeros(0)
-			cdn2 = numpy.zeros(0)
-			cdn3 = numpy.zeros(0)
-			cdn4 = numpy.zeros(0)
-			cdn5 = numpy.zeros(0)
-			for i in range(1, 5):
-				cdn1.append(n1,  bct.clockdiv(1, n1, 5, i))
-				cdn2.append(n2,  bct.clockdiv(1, n1, 5, i))
-				cdn3.append(n3,  bct.clockdiv(1, n1, 5, i))
-				cdn4.append(n4,  bct.clockdiv(1, n1, 5, i))
-				cdn5.append(n5,  bct.clockdiv(1, n1, 5, i))
-
-			n1Xn2 = bct.and_op(n1, n2)
-			print("n1Xn2 = n1 x n2 = ", n1Xn2)
-			n1Xn2Xn3 = bct.and_op(n1Xn2, n3)
-			print("n1Xn2Xn3 = n1Xn2 x n3 = ", n1Xn2Xn3)
-			n1Xn2Xn3Xn4 = bct.and_op(n1Xn2Xn3, n4)
-			print("n1Xn2Xn3Xn4 = n1Xn2Xn3 x n4 = ", n1Xn2Xn3Xn4)
-			n1Xn2Xn3Xn4Xn5 = bct.and_op(n1Xn2Xn3Xn4, n5)
-			print("n1Xn2Xn3Xn4Xn5 = n1Xn2Xn3Xn4 x n5 = ", n1Xn2Xn3Xn4Xn5)
-			end = time.time()
-			print(end - start, 'seconds')
-
-			accumulated_result = numpy.append(accumulated_result, n1Xn2Xn3Xn4Xn5)
-			result_float = bct.to_float(accumulated_result)
-
-			true_result = .25 * .25 * .5 * .5 * .25
-			error = abs(result_float - true_result)
-			print("true_result = ", true_result, ", result_float = ", result_float, ", error = ", error)
-			if error < epsilon:
-				print("result is within error.")
-				return
-		
-#			self.assertEqual(result_float, .25 * .25 * .5 * .5 * .25)
-
-	def test_multiply_two_4bitstreams(self):
-		# Measure multiplication of two 16 bit streams (result is 16^2 bits long)
-		accumulated_result = numpy.zeros(0)
-		epsilon = .00000000
-
-		term1 = .25
-		term2 = .25
-		n1 = bct.unary_SNG(4, 16, term1)
-		n2 = bct.lfsr_SNG(4, 16, term2, 1, 1)
+		term1 = .5
+		term2 = .5
+		n1 = bct.unary_SNG(precision, bitstream_length, term1)
+		n2 = bct.lfsr_SNG(precision, bitstream_length, term2)
 
 		print("n1 = ", n1, ", n2 = ", n2)
 
-		cdn1 = numpy.zeros(0)
-		cdn2 = numpy.zeros(0)
-
-		for part in range(1, 9):
-			major = 16 * (part - 1)
-			for i in range(1, 17):
+		for part in range(1, bitstream_length + 1):
+			cdn1 = numpy.zeros(0)
+			cdn2 = numpy.zeros(0)
+			major = bitstream_length * (part - 1)
+			for i in range(1, bitstream_length + 1):
 				offset = major + i
 				print(offset)
 				cdn1 = numpy.append(cdn1, bct.clockdiv_bit(1, n1, 2, offset))
-				cdn2 = numpy.append(cdn2, bct.clockdiv_bit(1, n1, 2, offset))
+				cdn2 = numpy.append(cdn2, bct.clockdiv_bit(2, n2, 2, offset))
 
 			print("cdn1 = ", cdn1)
-	
 			print("cdn2 = ", cdn2)
 	
 			cdn1Xcdn2 = bct.and_op(cdn1, cdn2)
 			print("cdn1Xcdn2 = cdn1 x cdn2 = ", cdn1Xcdn2)
 
-			accumulated_result = numpy.append(accumulated_result, cdn1Xcdn2)
-			result_float = bct.to_float(accumulated_result)
+			accumulated_result = accumulated_result + bct.number_of_1(cdn1Xcdn2)
+			accumulated_result_length += bitstream_length
+			result_float = accumulated_result / accumulated_result_length
 
 			true_result = term1 * term2
 			error = abs(result_float - true_result)
 			print("true_result = ", true_result, ", result_float = ", result_float, ", error = ", error)
-			if error < epsilon:
+			if error <= epsilon:
 				print("result is within error.")
 				return
 		
