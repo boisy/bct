@@ -9,7 +9,7 @@ import bct
 # Use substreams to minimize the impact of the bitstreams on RAM, and at the same time, compute them piecemeal to see if they fall within our desired accuracy.
 class bctTest(unittest.TestCase):
 	def test_multiply_n_bitstreams(self):
-		terms = [.5, .5]
+		terms = [.25, .5]
 		encoded_terms = []
 		number_of_terms = len(terms)
 		true_result = 1.0
@@ -25,7 +25,6 @@ class bctTest(unittest.TestCase):
 
 		print("Multiply", number_of_terms, "terms:", terms)
 		print("Precision =", precision, ", bitstream length =", bitstream_length)
-		print("True result is", true_result)
 		print("=====================================================")
 
 		for i in range(number_of_terms):
@@ -56,9 +55,9 @@ class bctTest(unittest.TestCase):
 			result_float = accumulated_result / accumulated_result_length
 
 			error = abs(result_float - true_result)
-			print("true_result = ", true_result, ", result_float = ", result_float, ", error = ", error)
+			print("True result = ", true_result, ", result_float = ", result_float, " (", accumulated_result, "/", accumulated_result_length, "), error = ", error)
 			if error <= epsilon:
-				print("result is within error after", accumulated_result_length, "bits.")
+				print("result is within error after", accumulated_result_length, "bits (", int(accumulated_result_length / bitstream_length), "tries ).")
 				return
 			else:
 				print("not accurate enough with", accumulated_result_length, "bits... try with", bitstream_length, "more bits.")
