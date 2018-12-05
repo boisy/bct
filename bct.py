@@ -147,7 +147,7 @@ def clockdiv_bit(order, bitstream, total_inputs, pos):
 	# check if pos is valid
 	if (pos > total_length):
 		raise Exception('Out of range')
-	# determine repeat coun
+	# determine repeat count
 	repeat = pow(len(bitstream), order - 1)
 	bit_offset = int((pos - 1) / repeat)
 	bit_offset = bit_offset % len(bitstream)
@@ -159,7 +159,7 @@ def clockdiv_bits(order, bitstream, total_inputs, offset, length):
 		result = numpy.append(result, clockdiv_bit(order, bitstream, total_inputs, i))
 	return result	
 
-# Clock divison method
+# Clock division method
 # This method returns the clock divided bitstream based on its order and total inputs
 def clockdiv(order, bitstream, total_inputs):
 	result = numpy.zeros(0)

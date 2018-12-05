@@ -27,6 +27,7 @@ class bctTest(unittest.TestCase):
 		print("Precision =", precision, ", bitstream length =", bitstream_length)
 		print("=====================================================")
 
+		# use appropriate SNG for encoding floating point terms
 		for i in range(number_of_terms):
 			term = terms[i]
 			if i == 0:
@@ -34,17 +35,17 @@ class bctTest(unittest.TestCase):
 			else:	
 				encoded_terms.append(bct.lfsr_SNG(precision, bitstream_length, term))
 
-		for part in range(1, bitstream_length + 1):
+	
+		# compute 'segment_length' bits at a time
+		segment_length = bitstream_length
+		for segment in range(1, segment_length + 1):
 			expanded_terms = []
-			for i in range(number_of_terms):
-				expanded_terms.append(numpy.zeros(0))
-			major = bitstream_length * (part - 1)
-			for i in range(1, bitstream_length + 1):
-				offset = major + i
-				result = numpy.ones(bitstream_length)
-				for j in range(number_of_terms):
-					expanded_terms[j] = numpy.append(expanded_terms[j], bct.clockdiv_bit(j + 1, encoded_terms[j], number_of_terms, offset)) 		
-			result = numpy.ones(len(expanded_terms[0]))
+			segment_start_bit = bitstream_length * (segment - 1)
+			for j in range(number_of_terms):
+				segment_offset = (segment - 1) * segment_length
+				cdterm = bct.clockdiv_bits(j + 1, encoded_terms[j], number_of_terms, segment_offset, segment_length)
+				expanded_terms.append(cdterm)
+			result = numpy.ones(segment_length)
 			for i in range(number_of_terms):
 				print("term", i + 1, "=", expanded_terms[i])
 				result = bct.and_op(result, expanded_terms[i])
