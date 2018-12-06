@@ -3,7 +3,7 @@ import time
 import timeit
 import unittest
 import numpy
-import logging, sys
+import coloredlogs, logging, sys
 
 import bct
 
@@ -16,9 +16,12 @@ class bctTest(unittest.TestCase):
 		self.multiply([.25, .5, .5], 4, 16, 0.0)
 	
 	def multiply(self, terms, precision, bitstream_length, epsilon, debug = 0):
+		logger = logging.getLogger(__name__)
+		coloredlogs.install(level='DEBUG')
 		logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 		encoded_terms = []
 		number_of_terms = len(terms)
+		final_bitstream_length = pow(bitstream_length, number_of_terms)
 		true_result = 1.0
 		for t in terms:
 			true_result *= t
@@ -26,9 +29,9 @@ class bctTest(unittest.TestCase):
 		accumulated_result = 0
 		accumulated_result_length = 0
 
-		logging.info("Multiply %d terms: %s", number_of_terms, terms)
-		logging.info("Precision = %d, bitstream length = %d", precision, bitstream_length)
-		logging.info("=====================================================")
+		logger.info("Multiply %d terms: %s", number_of_terms, terms)
+		logger.info("Precision = %d, bitstream length = %d, total length = %d", precision, bitstream_length, final_bitstream_length)
+		logger.info("=====================================================")
 
 		# use appropriate SNG for encoding floating point terms
 		for i in range(number_of_terms):
@@ -41,7 +44,8 @@ class bctTest(unittest.TestCase):
 	
 		# compute 'segment_length' bits at a time
 		segment_length = bitstream_length
-		for segment in range(1, segment_length + 1):
+		count = int(final_bitstream_length / segment_length)
+		for segment in range(1, count + 1):
 			expanded_terms = []
 			segment_start_bit = segment_length * segment
 			for j in range(number_of_terms):
@@ -50,21 +54,21 @@ class bctTest(unittest.TestCase):
 				expanded_terms.append(cdterm)
 			result = numpy.ones(segment_length)
 			for i in range(number_of_terms):
-				logging.info("term %d = %s", i + 1, expanded_terms[i])
+				logger.info("term %d = %s", i + 1, expanded_terms[i])
 				result = bct.and_op(result, expanded_terms[i])
-			logging.info("result = %s", result)
+			logger.info("result = %s", result)
 
 			accumulated_result = accumulated_result + bct.number_of_1(result)
 			accumulated_result_length += segment_length
 			result_float = accumulated_result / accumulated_result_length
 
 			error = abs(result_float - true_result)
-			logging.info("True result = %f, result_float = %f (%d/%d), error = %f", true_result, result_float, accumulated_result, accumulated_result_length, error)
+			logger.info("True result = %f, result_float = %f (%d/%d), error = %f", true_result, result_float, accumulated_result, accumulated_result_length, error)
 			if error <= epsilon:
-				logging.info("result is within error after %d bits (%d tries)", accumulated_result_length, int(accumulated_result_length / segment_length))
+				logger.info("result is within error after %d bits (%d tries)", accumulated_result_length, int(accumulated_result_length / segment_length))
 				return
 			else:
-				logging.info("not accurate enough with %d bits", accumulated_result_length)
+				logger.error("not accurate enough with %d bits", accumulated_result_length)
 
 
 
