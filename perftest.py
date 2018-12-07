@@ -10,12 +10,12 @@ import bct
 # Use substreams to minimize the impact of the bitstreams on RAM, and at the same time, compute them piecemeal to see if they fall within our desired accuracy.
 class bctTest(unittest.TestCase):
 	def Xtest_multiply_2_bitstreams(self):
-		self.multiply([.25, .5], 4, 16, 0.0)
+		self.multiply([.25, .5], 4, 16)
 
 	def test_multiply_3_bitstreams(self):
-		self.multiply([.25, .5, .5], 4, 16, 0.0)
+		self.multiply([.25, .5, .5], 4, 16)
 	
-	def multiply(self, terms, precision, bitstream_length, epsilon, debug = 0):
+	def multiply(self, terms, precision, bitstream_length, segment_length = 0, epsilon = 0.0, debug = 0):
 		logger = logging.getLogger(__name__)
 		coloredlogs.install(level='DEBUG')
 		logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
@@ -42,8 +42,10 @@ class bctTest(unittest.TestCase):
 				encoded_terms.append(bct.lfsr_SNG(precision, bitstream_length, term))
 
 	
-		# compute 'segment_length' bits at a time
-		segment_length = bitstream_length
+		# if 0, compute 'segment_length' bits at a time
+		if (segment_length == 0):
+			segment_length = bitstream_length
+
 		count = int(final_bitstream_length / segment_length)
 		for segment in range(1, count + 1):
 			expanded_terms = []
