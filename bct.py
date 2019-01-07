@@ -195,7 +195,7 @@ def rotate_bit(order, bitstream, total_inputs, offset):
 		bit_to_return = ((offset - 1) % len(bitstream))
 	else:
 		group = int((offset - 1) / group_size)
-		bit_to_return = ((offset - 1) - group) % group_size
+		bit_to_return = ((offset - 1) - group) % len(bitstream)
 
 	return bitstream[bit_to_return]
 
