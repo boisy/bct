@@ -233,8 +233,8 @@ def rotate_suboptimal(order, bitstream, total_inputs):
 # Relatively prime
 # Added Nov 14 2018
 def relatively_prime_bit(bitstream, entire_length, offset):
-	number_of_repeats = entire_length / len(bitstream)
-	if (offset < 1 or offset > entire_length):
+	number_of_repeats = int(entire_length / len(bitstream))
+	if (offset < 1 or offset > number_of_repeats * len(bitstream)):
 		raise Exception('Out of range')
 	bit_to_return = (offset - 1) % len(bitstream)
 
@@ -247,7 +247,8 @@ def relatively_prime_bits(bitstream, entire_length, offset, length):
 	return result	
 
 def relatively_prime(bitstream, entire_length):
-	return relatively_prime_bits(bitstream, entire_length, 1, entire_length)
+	number_of_repeats = int(entire_length / len(bitstream))
+	return relatively_prime_bits(bitstream, entire_length, 1, number_of_repeats * len(bitstream))
 
 def relatively_prime_suboptimal(bitstream, entire_length):
 	result = numpy.zeros(0)
