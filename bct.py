@@ -166,7 +166,7 @@ def clockdiv_bits(order, bitstream, total_inputs, offset, length):
 #   total_inputs: the total number of inputs in the operation
 def clockdiv(order, bitstream, total_inputs):
 	entire_length = pow(len(bitstream), total_inputs)
-	return numpy.append(result, clockdiv_bit(order, bitstream, total_inputs, 1, entire_length))
+	return clockdiv_bits(order, bitstream, total_inputs, 1, entire_length)
 
 # Rotation method that returns one bit
 # This method returns the bit (0 or 1) at position 'offset' (1 <= pos <= pow(len(bitstream), total_inputs))
@@ -185,12 +185,20 @@ def rotate_bit(order, bitstream, total_inputs, offset):
 	# 
 	
 	total_length = pow(len(bitstream), total_inputs)
-	group_size = pow(len(bitstream), order - 1)
+
 	# check if offset is valid
 	if (offset < 1 or offset > total_length):
 		raise Exception('Out of range')
-	group = int((offset - 1) / group_size)
-	bit_to_return = (int((offset - 1) % group_size) + group) % len(bitstream)
+
+	group_size = pow(len(bitstream), order - 1)
+	if (group_size == 1):
+		bit_to_return = ((offset - 1) % len(bitstream))
+	else:
+		group = int((offset - 1) / group_size)
+#	bit_to_return = group_size - ((int((offset - 1) % group_size) + group)) % len(bitstream)
+#	bit_to_return = ((group * group_size) + (group + offset - 1)) % len(bitstream)
+#	print("group =",group,", group_size =", group_size);
+		bit_to_return = ((offset - 1) - group) % group_size
 
 	return bitstream[bit_to_return]
 
