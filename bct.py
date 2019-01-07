@@ -145,7 +145,7 @@ def unary_SNG(precision, stream_length, input_number_float):
 def clockdiv_bit(order, bitstream, total_inputs, offset):
 	total_length = pow(len(bitstream), total_inputs)
 	# check if offset is valid
-	if (offset > total_length):
+	if (offset < 1 or offset > total_length):
 		raise Exception('Out of range')
 	# determine repeat count
 	repeat = pow(len(bitstream), order - 1)
@@ -173,10 +173,41 @@ def clockdiv(order, bitstream, total_inputs):
 
 	return result
 
+# Rotation method that returns one bit
+# This method returns the bit (0 or 1) at position 'offset' (1 <= pos <= pow(len(bitstream), total_inputs))
+# Notes:
+# - length of bitstream impacts rotation frequency
+#   e.g. rotate(2, [1, 0], 3) -> array([1., 0., 0., 1., 1., 0., 0., 1.])
+def rotate_bit(order, bitstream, total_inputs, position):
+	# concrete example: order = 2, bitstream = [1, 0, 1, 1], so  group size = 4^(2-1):
+	# after group 0, last bit (1) repeats in first bit of group 1, offset = 1 / 4
+	# after group 1, next to last bit (1) repeats in first bit of group 2, offset = 2 / 4
+	# after group 2, next to next to last bit (0) repeats in first bit of group 3, offset = 3 / 4
+	# after group 3, next to next to next to last (1) bit repeats in first bit of group 4, offset = 4 / 4
+	# and so on... 
+	# ((position - 1) / group size) = group (0 based)
+	# ((position - 1) % group size) = bit in group (0 based)
+	# 
+	
+	total_length = pow(len(bitstream), total_inputs)
+	group_size = pow(len(bitstream), order - 1)
+	# check if offset is valid
+	if (position < 1 or position > total_length):
+		raise Exception('Out of range')
+	group = int((position - 1) / group_size)
+	bit_to_return = (int((position - 1) % group_size) + group) % len(bitstream)
+
+	return bitstream[bit_to_return]
+
 # Rotate the passed bitstream
 #
-# e.g. rotate([1, 0]) -> [1, 0,  0, 1]
-#       rotate([1, 0, 1, 0]) -> [1, 0, 1, 0,  0, 1, 0, 1,  1, 0, 1, 0,  0, 1, 0, 1]
+# e.g. rotate(1, [1, 0], 1) -> array([1., 0.])
+# e.g. rotate(1, [1, 0], 2) -> array([1., 0., 1., 0.])
+# e.g. rotate(2, [1, 0], 2) -> array([1., 0., 0., 1.])
+# e.g. rotate(1, [1, 0], 3) -> array([1., 0., 1., 0., 1., 0., 1., 0.])
+# e.g. rotate(2, [1, 0], 3) -> array([1., 0., 0., 1., 1., 0., 0., 1.])
+# e.g. rotate(3, [1, 0], 3) -> array([1., 0., 1., 0., 0., 1., 0., 1.])
+# e.g. rotate(3, [1, 0], 4) -> array([1., 0., 1., 0.,  0., 1., 0., 1.,  1., 0., 1., 0.,  0., 1., 0., 1.])
 def rotate(order, bitstream, total_inputs):
 	result = numpy.zeros(0)
 	stall_count = pow(len(bitstream), order - 1)

@@ -7,13 +7,16 @@ import coloredlogs, logging, sys
 
 import bct
 
+# Measure total simulation for (a) window-based method, and (b) total method
+# Measure against different epsilons
+
 # Use substreams to minimize the impact of the bitstreams on RAM, and at the same time, compute them piecemeal to see if they fall within our desired accuracy.
 class bctTest(unittest.TestCase):
 	def Xtest_multiply_2_bitstreams(self):
-		self.multiply([.25, .5], 4, 16)
+		self.multiply([.25, .5], 4, 16, 8)
 
 	def test_multiply_3_bitstreams(self):
-		self.multiply([.25, .5, .5], 4, 16)
+		self.multiply([.25, .5, .5, .25, .25, .5, .125, .25], 8, 256, 8)
 	
 	def multiply(self, terms, precision, bitstream_length, segment_length = 0, epsilon = 0.0, debug = 0):
 		logger = logging.getLogger(__name__)
@@ -67,7 +70,7 @@ class bctTest(unittest.TestCase):
 			error = abs(result_float - true_result)
 			logger.info("True result = %f, result_float = %f (%d/%d), error = %f", true_result, result_float, accumulated_result, accumulated_result_length, error)
 			if error <= epsilon:
-				logger.info("result is within error after %d bits (%d tries)", accumulated_result_length, int(accumulated_result_length / segment_length))
+				logger.info("result is within error after %d bits (%d steps)", accumulated_result_length, int(accumulated_result_length / segment_length))
 				return
 			else:
 				logger.error("not accurate enough with %d bits", accumulated_result_length)
