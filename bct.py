@@ -192,10 +192,11 @@ def rotate_bit(order, bitstream, total_inputs, offset):
 
 	group_size = pow(len(bitstream), order - 1)
 	if (group_size == 1):
-		bit_to_return = ((offset - 1) % len(bitstream))
+		group = 0
 	else:
 		group = int((offset - 1) / group_size)
-		bit_to_return = ((offset - 1) - group) % len(bitstream)
+
+	bit_to_return = ((offset - 1) - group) % len(bitstream)
 
 	return bitstream[bit_to_return]
 
