@@ -12,15 +12,21 @@ import bct
 
 # Use substreams to minimize the impact of the bitstreams on RAM, and at the same time, compute them piecemeal to see if they fall within our desired accuracy.
 class bctTest(unittest.TestCase):
-	def Xtest_multiply_2_bitstreams(self):
-		self.multiply([.25, .5], 4, 16, 8)
+	def test_multiply_2_bitstreams(self):
+		self.multiply([.25, .5], 8, 256, 8)
 
-	def test_multiply_3_bitstreams(self):
+	def xtest_multiply_3_bitstreams(self):
+		self.multiply([.25, .5, .5], 8, 256, 8)
+	
+	def Xtest_multiply_4_bitstreams(self):
+		self.multiply([.25, .5, .5, .25], 8, 256, 8)
+	
+	def Xtest_multiply_3_bitstreams(self):
 		self.multiply([.25, .5, .5, .25, .25, .5, .125, .25], 8, 256, 8)
 	
 	def multiply(self, terms, precision, bitstream_length, segment_length = 0, epsilon = 0.0, debug = 0):
 		logger = logging.getLogger(__name__)
-		coloredlogs.install(level='DEBUG')
+		coloredlogs.install(level='ERROR')
 		logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 		encoded_terms = []
 		number_of_terms = len(terms)
@@ -55,7 +61,7 @@ class bctTest(unittest.TestCase):
 			segment_start_bit = segment_length * segment
 			for j in range(number_of_terms):
 				segment_offset = (segment - 1) * segment_length + 1
-				cdterm = bct.clockdiv_bits(j + 1, encoded_terms[j], number_of_terms, segment_offset, segment_length)
+				cdterm = bct.rotate_bits(j + 1, encoded_terms[j], number_of_terms, segment_offset, segment_length)
 				expanded_terms.append(cdterm)
 			result = numpy.ones(segment_length)
 			for i in range(number_of_terms):

@@ -141,22 +141,36 @@ def unary_SNG(precision, stream_length, input_number_float):
 	return result
 
 # Clock division method that returns one bit
-# This method returns the bit (0 or 1) at position 'offset' (1 <= pos <= pow(len(bitstream), total_inputs))
-def clockdiv_bit(order, bitstream, total_inputs, offset):
+# This method returns the bit (0 or 1) at 'position' (1 <= position <= pow(len(bitstream), total_inputs))
+# Parameters:
+#   order = the order of the bitstream in the operation (1, 2, 3, ...)
+#   bitstream = the bitstream (e.g [1, 0, 0, 1])
+#   total_inputs = the total inputs for the operation (1, 2, 3, ...)
+#   position = the index into the clock divided bitstream to obtain the bit
+def clockdiv_bit(order, bitstream, total_inputs, position):
+	# compute the total length of the clock divided bitstream
 	total_length = pow(len(bitstream), total_inputs)
-	# check if offset is valid
-	if (offset < 1 or offset > total_length):
+	# check if position is valid and raise an exception if it is out of bounds
+	if (position < 1 or position > total_length):
 		raise Exception('Out of range')
-	# determine repeat count
-	repeat = pow(len(bitstream), order - 1)
-	bit_offset = int((offset - 1) / repeat)
-	bit_offset = bit_offset % len(bitstream)
-	return bitstream[bit_offset]
 
-def clockdiv_bits(order, bitstream, total_inputs, offset, length):
+	# determine the bitstream's repeat count
+	repeat = pow(len(bitstream), order - 1)
+
+	# compute the position to the bit and return the bit
+	bit_position = (int((position - 1) / repeat)) % len(bitstream)
+
+	return bitstream[bit_position]
+
+# Clock division method that returns 'length' bits
+# This method returns 'n' bits starting at 'position' and calls the single bit method above
+def clockdiv_bits(order, bitstream, total_inputs, position, length):
 	result = numpy.zeros(0)
-	for i in range(offset, offset + length):
+
+	# loop through and build the vector of bits
+	for i in range(position, position + length):
 		result = numpy.append(result, clockdiv_bit(order, bitstream, total_inputs, i))
+
 	return result	
 
 # Clock division method
@@ -169,40 +183,40 @@ def clockdiv(order, bitstream, total_inputs):
 	return clockdiv_bits(order, bitstream, total_inputs, 1, entire_length)
 
 # Rotation method that returns one bit
-# This method returns the bit (0 or 1) at position 'offset' (1 <= pos <= pow(len(bitstream), total_inputs))
+# This method returns the bit (0 or 1) at 'position' (1 <= pos <= pow(len(bitstream), total_inputs))
 # Notes:
 # - length of bitstream impacts rotation frequency
 #   e.g. rotate(2, [1, 0], 3) -> array([1., 0., 0., 1., 1., 0., 0., 1.])
-def rotate_bit(order, bitstream, total_inputs, offset):
+def rotate_bit(order, bitstream, total_inputs, position):
 	# concrete example: order = 2, bitstream = [1, 0, 1, 1], so  group size = 4^(2-1):
-	# after group 0, last bit (1) repeats in first bit of group 1, offset = 1 / 4
-	# after group 1, next to last bit (1) repeats in first bit of group 2, offset = 2 / 4
-	# after group 2, next to next to last bit (0) repeats in first bit of group 3, offset = 3 / 4
-	# after group 3, next to next to next to last (1) bit repeats in first bit of group 4, offset = 4 / 4
+	# after group 0, last bit (1) repeats in first bit of group 1, position = 1 / 4
+	# after group 1, next to last bit (1) repeats in first bit of group 2, position = 2 / 4
+	# after group 2, next to next to last bit (0) repeats in first bit of group 3, position = 3 / 4
+	# after group 3, next to next to next to last (1) bit repeats in first bit of group 4, position = 4 / 4
 	# and so on... 
-	# ((offset - 1) / group size) = group (0 based)
-	# ((offset - 1) % group size) = bit in group (0 based)
+	# ((position - 1) / group size) = group (0 based)
+	# ((position - 1) % group size) = bit in group (0 based)
 	# 
 	
 	total_length = pow(len(bitstream), total_inputs)
 
-	# check if offset is valid
-	if (offset < 1 or offset > total_length):
+	# check if position is valid
+	if (position < 1 or position > total_length):
 		raise Exception('Out of range')
 
 	group_size = pow(len(bitstream), order - 1)
 	if (group_size == 1):
 		group = 0
 	else:
-		group = int((offset - 1) / group_size)
+		group = int((position - 1) / group_size)
 
-	bit_to_return = ((offset - 1) - group) % len(bitstream)
+	bit_to_return = ((position - 1) - group) % len(bitstream)
 
 	return bitstream[bit_to_return]
 
-def rotate_bits(order, bitstream, total_inputs, offset, length):
+def rotate_bits(order, bitstream, total_inputs, position, length):
 	result = numpy.zeros(0)
-	for i in range(offset, offset + length):
+	for i in range(position, position + length):
 		result = numpy.append(result, rotate_bit(order, bitstream, total_inputs, i))
 	return result	
 
@@ -238,17 +252,17 @@ def rotate_suboptimal(order, bitstream, total_inputs):
 
 # Relatively prime
 # Added Nov 14 2018
-def relatively_prime_bit(bitstream, entire_length, offset):
+def relatively_prime_bit(bitstream, entire_length, position):
 	number_of_repeats = int(entire_length / len(bitstream))
-	if (offset < 1 or offset > number_of_repeats * len(bitstream)):
+	if (position < 1 or position > number_of_repeats * len(bitstream)):
 		raise Exception('Out of range')
-	bit_to_return = (offset - 1) % len(bitstream)
+	bit_to_return = (position - 1) % len(bitstream)
 
 	return bitstream[bit_to_return]
 
-def relatively_prime_bits(bitstream, entire_length, offset, length):
+def relatively_prime_bits(bitstream, entire_length, position, length):
 	result = numpy.zeros(0)
-	for i in range(offset, offset + length):
+	for i in range(position, position + length):
 		result = numpy.append(result, relatively_prime_bit(bitstream, entire_length, i))
 	return result	
 
