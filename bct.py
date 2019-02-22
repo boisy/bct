@@ -131,7 +131,7 @@ def lfsr_RNG(precision, position_in_tap_file, seed):
 #
 def unary_SNG(precision, stream_length, input_number_float):
 	result = numpy.zeros(0)
-	compare2 = input_number_float * pow(2,precision)
+	compare2 = input_number_float * pow(2, precision)
 	for counter in range(stream_length):
 		compare1 = counter
 		if compare1 < compare2:

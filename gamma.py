@@ -3,39 +3,42 @@ import bct
 
 # Parameters:
 # value: 0 <= n < 1
-# method: bitstream generation method
+# BGM: bitstream generation method
 # degree: number of terms
 # precision: number of bits
 # coefficients: numpy array with 'degree' values
-def gamma(value, method, SNG, degree, precision, coefficients):
+def gamma(value, BGM, SNG, degree, precision, stream_length, coefficients):
 	# convert coefficients to bitstreams
 	coefficients_encoded = numpy.array([])
 	for i in range(len(coefficients)):
-		a = SNG(precision, coefficients[i])
-		x = method(i + 1, a, degree + 1)
+		a = SNG(precision, stream_length, coefficients[i])
+		x = BGM(i + 1, a, degree + 1)
 		if len(coefficients_encoded) == 0:
 			coefficients_encoded = x
 		else:
 			coefficients_encoded = numpy.vstack((coefficients_encoded, x))
 
-	total = numpy.zeros(pow(precision, degree))
+	# add value to each coefficient
+	total = numpy.zeros(pow(stream_length, degree))
 	for i in range(degree):
-		p = method(i + 1, SNG(precision, value), degree)
-		total = numpy.add(total, p)
+		a = SNG(precision, stream_length, value)
+		x = BGM(i + 1, a, degree)
+		total = numpy.add(total, x)
 
 	result = numpy.zeros(0)
 	for i in range(len(total)):
-		pos = int(total[i])
+		pos = int(total[i]) - 1
 		index = int(pos)
 		bit = coefficients_encoded[index][i]
 		result = numpy.append(result, bit)
 
 	return result
 
-bernstein_values = numpy.array([2.0/8.0, 5.0/8.0, 3.0/8.0, 6.0/8.0])
-result = gamma(4.0/8.0, bct.clockdiv, bct.unary_SNG, 3, 8, bernstein_values)
-result2 = gamma(4.0/8.0, bct.clockdiv, bct.lfsr_SNG, 3, 8, bernstein_values)
+precision = 3
+stream_length = pow(2, precision)
+bernstein_values = numpy.array([2.0/stream_length, 5.0/stream_length, 3.0/stream_length, 6.0/stream_length])
+result = gamma(4.0/stream_length, bct.clockdiv, bct.unary_SNG, len(bernstein_values), precision, stream_length, bernstein_values)
 numOf1 = bct.number_of_1(result)
-total = numOf1 / pow(8, 3)
+total = numOf1 / pow(16, 3)
 print(total)
 
