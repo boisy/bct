@@ -13,26 +13,52 @@ import bct
 # Use substreams to minimize the impact of the bitstreams on RAM, and at the same time, compute them piecemeal to see if they fall within our desired accuracy.
 class bctTest(unittest.TestCase):
 	def test_main(self):
-		precision = 8
+		bctTest.multiply_test_comprehensive(self)
+
+	def multiply_test_1(self):
+		precision = 6
 		bitstream_length = pow(2, precision)
+		run_loop = 1
 		term1 = (bitstream_length - 1) / bitstream_length
 		term2 = (bitstream_length - 1) / bitstream_length
-		bctTest.multiply_bitstreams(self, [term1, term2], precision, bitstream_length, 128, 10)
+		bctTest.multiply_bitstreams(self, bct.clockdiv, bct.clockdiv_bits, [term1, term2], precision, bitstream_length, 128, run_loop)
 
 		term1 = 1.0 / bitstream_length
 		term2 = 1.0 / bitstream_length
-		bctTest.multiply_bitstreams(self, [term1, term2], precision, bitstream_length, 128, 10)
+		bctTest.multiply_bitstreams(self, bct.clockdiv, bct.clockdiv_bits, [term1, term2], precision, bitstream_length, 128, run_loop)
 
-	def multiply_bitstreams(self, terms, precision=4, bitstream_length=16, segment_length=4, run_loops=10):
+	def multiply_test_comprehensive(self):
+		logger = logging.getLogger(__name__)	
+		precision = 7
+		bitstream_length = pow(2, precision)
+		run_loop = 1
+		sngs = [bct.unary_SNG, bct.unary_SNG]
+		methods_non_opt = [bct.rotate, bct.rotate]
+		methods_opt = [bct.rotate_bits, bct.rotate_bits]
+
+		total_optimized_time = 0.0
+		total_non_optimized_time = 0.0
+
+		for a in range(1, bitstream_length):
+			for b in range(a, bitstream_length):
+				term1 = a / bitstream_length
+				term2 = b / bitstream_length
+				times = bctTest.multiply_bitstreams(self, sngs, methods_non_opt, methods_opt, [term1, term2], precision, bitstream_length, 128, run_loop)
+				total_non_optimized_time = total_non_optimized_time + times[0]
+				total_optimized_time = total_optimized_time + times[1]
+				logger.critical('total non-optimized time = %f', total_non_optimized_time)
+				logger.critical('total optimized time = %f', total_optimized_time)
+
+	def multiply_bitstreams(self, sngs, methods_non_opt, methods_opt, terms, precision=4, bitstream_length=16, segment_length=4, run_loops=10):
 		logger = logging.getLogger(__name__)	
 		coloredlogs.install(level='CRITICAL')
 		logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
-		logger.critical("Start of optimized multiplication of %s\n    %d-bit precision\n    %d-bitstream length\n    %d-bit segment length\n    %d run loops", terms, precision, bitstream_length, segment_length, run_loops)
+		logger.critical("Start of optimized multiplication of %s\n    %s SNGs\n    %s methods\n    %d-bit precision\n    %d-bitstream length\n    %d-bit segment length\n    %d run loops", terms, sngs, methods_opt, precision, bitstream_length, segment_length, run_loops)
 		optimized_time = 0.0
 		for j in range(0, run_loops):
 			start = timer()
-			self.multiply(terms, precision, bitstream_length, segment_length, 0.0)
+			self.multiply(sngs, methods_opt, terms, precision, bitstream_length, segment_length, 0.0)
 			end = timer()
 			optimized_time = optimized_time + (end - start)
 		optimized_time = optimized_time / run_loops 
@@ -41,50 +67,14 @@ class bctTest(unittest.TestCase):
 
 		logger.critical("Start of non-optimized multiplication of %s\n    %d-bit precision\n    %d-bitstream length\n    %d-bit segment length\n    %d run loops", terms, precision, bitstream_length, segment_length, run_loops)
 		start = timer()
-		self.multiply_no_opt(terms, precision, bitstream_length)
+		self.multiply_non_opt(sngs, methods_non_opt, terms, precision, bitstream_length)
 		end = timer()
 		non_optimized_time = end - start
 		logger.critical("End of non-optimized multiplication, time is %f seconds", non_optimized_time)
 		logger.critical("Optimized multiplication is %.2fX faster", non_optimized_time / optimized_time)
+		return (non_optimized_time, optimized_time)
 
-	# multiply all possibilities (0/X to X-1/X)
-	def multiply_2_bitstreams_complete(self):
-		precision = 5
-		bitstream_length = pow(2, precision)
-
-		logger = logging.getLogger(__name__)	
-		coloredlogs.install(level='CRITICAL')
-		logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
-
-		segment_length = 4
-		logger.critical("Start of optimized multiplication")
-		start_outer = timer()
-		for a in range(0, bitstream_length):
-			for b in range(a, bitstream_length):
-				term1 = a / bitstream_length
-				term2 = b / bitstream_length
-				start = timer()
-				self.multiply([term1, term2], precision, bitstream_length, segment_length)
-				end = timer()
-#				logger.critical("Optimized multiply %d/%d X %d/%d, time is %f", a, bitstream_length, b, bitstream_length, end - start)
-		end_outer = timer()
-		logger.critical("Optimized multiply, total time is %f", end_outer - start_outer)
-
-
-		logger.critical("Start of non-optimized multiplication")
-		start_outer = timer()
-		for a in range(0, bitstream_length):
-			for b in range(a, bitstream_length):
-				term1 = a / bitstream_length
-				term2 = b / bitstream_length
-				start = timer()
-				self.multiply_no_opt([term1, term2], precision, bitstream_length)
-				end = timer()
-#				logger.critical("Non-optimized multiply %d/%d X %d/%d, time is %f", a, bitstream_length, b, bitstream_length, end - start)
-		end_outer = timer()
-		logger.critical("Non-optimized multiply, total time is %f", end_outer - start_outer)
-
-	def multiply_no_opt(self, terms, precision, bitstream_length, epsilon = 0.0, debug = 0):
+	def multiply_non_opt(self, sngs, methods, terms, precision, bitstream_length, epsilon = 0.0, debug = 0):
 		logger = logging.getLogger(__name__)	
 		encoded_terms = []
 		number_of_terms = len(terms)
@@ -96,14 +86,11 @@ class bctTest(unittest.TestCase):
 		# use appropriate SNG for encoding floating point terms
 		for i in range(number_of_terms):
 			term = terms[i]
-			if i == 0:
-				encoded_term = bct.unary_SNG(precision, bitstream_length, term)
-				t = bct.rotate(i + 1, encoded_term, number_of_terms)
-				encoded_terms.append(t)
-			else:	
-				encoded_term = bct.unary_SNG(precision, bitstream_length, term)
-				t = bct.rotate(i + 1, encoded_term, number_of_terms)
-				encoded_terms.append(t)
+			s = sngs[i]
+			encoded_term = s(precision, bitstream_length, term)
+			m = methods[i]
+			t = m(i + 1, encoded_term, number_of_terms)
+			encoded_terms.append(t)
 
 		result = numpy.ones(final_bitstream_length)
 		for j in range(number_of_terms):
@@ -115,7 +102,7 @@ class bctTest(unittest.TestCase):
 		logger.error("True result = %f, result_float = %f (%d/%d), error = %f", true_result, result_float, num_1s, final_bitstream_length, error)
 
 
-	def multiply(self, terms, precision, bitstream_length, segment_length = 0, epsilon = 0.0, debug = 0):
+	def multiply(self, sngs, methods, terms, precision, bitstream_length, segment_length = 0, epsilon = 0.0, debug = 0):
 		logger = logging.getLogger(__name__)
 		encoded_terms = []
 		number_of_terms = len(terms)
@@ -128,16 +115,14 @@ class bctTest(unittest.TestCase):
 		accumulated_result_length = 0
 
 		logger.info("Multiply %d terms: %s", number_of_terms, terms)
-		logger.info("Precision = %d, bitstream length = %d, total length = %d", precision, bitstream_length, final_bitstream_length)
+		logger.info("Methods = %s, precision = %d, bitstream length = %d, total length = %d", methods, precision, bitstream_length, final_bitstream_length)
 		logger.info("=====================================================")
 
 		# use appropriate SNG for encoding floating point terms
 		for i in range(number_of_terms):
 			term = terms[i]
-			if i == 0:
-				encoded_terms.append(bct.unary_SNG(precision, bitstream_length, term))
-			else:	
-				encoded_terms.append(bct.unary_SNG(precision, bitstream_length, term))
+			s = sngs[i]
+			encoded_terms.append(s(precision, bitstream_length, term))
 	
 		# if 0, compute 'segment_length' bits at a time
 		if (segment_length == 0):
@@ -149,7 +134,8 @@ class bctTest(unittest.TestCase):
 			segment_start_bit = segment_length * segment
 			for j in range(number_of_terms):
 				segment_offset = (segment - 1) * segment_length + 1
-				cdterm = bct.clockdiv_bits(j + 1, encoded_terms[j], number_of_terms, segment_offset, segment_length)
+				m = methods[j]
+				cdterm = m(j + 1, encoded_terms[j], number_of_terms, segment_offset, segment_length)
 				expanded_terms.append(cdterm)
 			result = numpy.ones(segment_length)
 			for i in range(number_of_terms):
