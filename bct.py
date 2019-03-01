@@ -9,6 +9,7 @@ import numpy
 import random
 import sys
 import unittest
+import sobol_seq
 from lfsr import LFSR
 
 # Count the number of 1's in a bitstream
@@ -36,6 +37,24 @@ def repeat(bitstream, repeat_count):
 	result = ''
 	for i in range(repeat_count):
 		result = result + bitstream
+
+	return result
+
+# Sobol generator
+def sobol_SNG(precision, stream_length, input_number_float):
+	result = numpy.zeros(0)
+	denominator = stream_length
+	vec = sobol_seq.i4_sobol_generate(1, denominator)
+	vec = numpy.vstack([0, vec])
+	vec = vec[:-1]
+#       print("first n numbers in Sobol sequence:")
+#       print(vec)
+
+	for n in range(len(vec)):
+		if input_number_float > vec[n]:
+			result = numpy.append(result, 1)
+		else:
+			result = numpy.append(result, 0)
 
 	return result
 
@@ -570,6 +589,10 @@ class bctTest(unittest.TestCase):
 		
 	def test_lfsr_sng(self):
 		result = lfsr_SNG(8, 16, .25)
+
+	def test_sobol_sng(self):
+		result = sobol_SNG(8, 16, .25)
+		numpy.testing.assert_equal(result, [1., 0., 0., 0., 0., 0., 0., 1., 1., 0., 0., 0., 0., 0., 0., 1.])
 
 # perform unit testing if no parameters specified (e.g. python bct.py)
 if __name__ == '__main__':
