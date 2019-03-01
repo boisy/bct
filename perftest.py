@@ -8,73 +8,87 @@ import coloredlogs, logging, sys
 import bct
 
 # Measure total simulation for (a) window-based method, and (b) total method
-# Measure against different epsilons
+# Measure against different Mean Absolute Errors (MAEs)
 
 # Use substreams to minimize the impact of the bitstreams on RAM, and at the same time, compute them piecemeal to see if they fall within our desired accuracy.
 class bctTest(unittest.TestCase):
 	def test_main(self):
-		bctTest.multiply_test_comprehensive(self)
-
-	def multiply_test_1(self):
-		precision = 6
-		bitstream_length = pow(2, precision)
-		run_loop = 1
-		term1 = (bitstream_length - 1) / bitstream_length
-		term2 = (bitstream_length - 1) / bitstream_length
-		bctTest.multiply_bitstreams(self, bct.clockdiv, bct.clockdiv_bits, [term1, term2], precision, bitstream_length, 128, run_loop)
-
-		term1 = 1.0 / bitstream_length
-		term2 = 1.0 / bitstream_length
-		bctTest.multiply_bitstreams(self, bct.clockdiv, bct.clockdiv_bits, [term1, term2], precision, bitstream_length, 128, run_loop)
-
-	def multiply_test_comprehensive(self):
-		logger = logging.getLogger(__name__)	
-		precision = 7
-		bitstream_length = pow(2, precision)
-		run_loop = 1
 		sngs = [bct.unary_SNG, bct.unary_SNG]
-		methods_non_opt = [bct.rotate, bct.rotate]
-		methods_opt = [bct.rotate_bits, bct.rotate_bits]
+		methods_conventional = [bct.clockdiv, bct.clockdiv]
+		methods_segmented = [bct.clockdiv_bits, bct.clockdiv_bits]
+#		methods_conventional = [bct.rotate, bct.rotate]
+#		methods_segmented = [bct.rotate_bits, bct.rotate_bits]
+#		bctTest.multiply_test_comprehensive_2_terms(self, 4, sngs, methods_conventional, methods_segmented, 4, 0.0)
 
-		total_optimized_time = 0.0
-		total_non_optimized_time = 0.0
+		sngs = [bct.unary_SNG, bct.unary_SNG, bct.unary_SNG]
+		methods_conventional = [bct.clockdiv, bct.clockdiv, bct.clockdiv]
+		methods_segmented = [bct.clockdiv_bits, bct.clockdiv_bits, bct.clockdiv_bits]
+		bctTest.multiply_test_comprehensive_3_terms(self, 4, sngs, methods_conventional, methods_segmented, 4, 0.1)
+
+	def multiply_test_comprehensive_2_terms(self, precision, sngs, methods_conventional, methods_segmented, segment_length = 4, mae = 0.0):
+		logger = logging.getLogger(__name__)	
+		bitstream_length = pow(2, precision)
+		run_loops = 1
+
+		total_segmented_time = 0.0
+		total_conventional_time = 0.0
 
 		for a in range(1, bitstream_length):
-			for b in range(a, bitstream_length):
-				term1 = a / bitstream_length
-				term2 = b / bitstream_length
-				times = bctTest.multiply_bitstreams(self, sngs, methods_non_opt, methods_opt, [term1, term2], precision, bitstream_length, 128, run_loop)
-				total_non_optimized_time = total_non_optimized_time + times[0]
-				total_optimized_time = total_optimized_time + times[1]
-				logger.critical('total non-optimized time = %f', total_non_optimized_time)
-				logger.critical('total optimized time = %f', total_optimized_time)
+			for b in range(1, bitstream_length):
+				term1 = float(a) / bitstream_length
+				term2 = float(b) / bitstream_length
+				times = bctTest.multiply_bitstreams(self, sngs, methods_conventional, methods_segmented, [term1, term2], precision, bitstream_length, segment_length, mae, run_loops)
+				total_conventional_time = total_conventional_time + times[0]
+				total_segmented_time = total_segmented_time + times[1]
+				logger.critical('total conventional time = %f', total_conventional_time)
+				logger.critical('total segmented time = %f', total_segmented_time)
 
-	def multiply_bitstreams(self, sngs, methods_non_opt, methods_opt, terms, precision=4, bitstream_length=16, segment_length=4, run_loops=10):
+	def multiply_test_comprehensive_3_terms(self, precision, sngs, methods_conventional, methods_segmented, segment_length = 4, mae = 0.0):
+		logger = logging.getLogger(__name__)	
+		bitstream_length = pow(2, precision)
+		run_loops = 1
+
+		total_segmented_time = 0.0
+		total_conventional_time = 0.0
+
+		for a in range(1, bitstream_length):
+			for b in range(1, bitstream_length):
+				for c in range(1, bitstream_length):
+					term1 = float(a) / bitstream_length
+					term2 = float(b) / bitstream_length
+					term3 = float(c) / bitstream_length
+					times = bctTest.multiply_bitstreams(self, sngs, methods_conventional, methods_segmented, [term1, term2, term3], precision, bitstream_length, segment_length, mae, run_loops)
+					total_conventional_time = total_conventional_time + times[0]
+					total_segmented_time = total_segmented_time + times[1]
+					logger.critical('total conventional time = %f', total_conventional_time)
+					logger.critical('total segmented time = %f', total_segmented_time)
+
+	def multiply_bitstreams(self, sngs, methods_conventional, methods_segmented, terms, precision=4, bitstream_length=16, segment_length=4, mae = 0.0, run_loops=10):
 		logger = logging.getLogger(__name__)	
 		coloredlogs.install(level='CRITICAL')
 		logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
-		logger.critical("Start of optimized multiplication of %s\n    %s SNGs\n    %s methods\n    %d-bit precision\n    %d-bitstream length\n    %d-bit segment length\n    %d run loops", terms, sngs, methods_opt, precision, bitstream_length, segment_length, run_loops)
-		optimized_time = 0.0
+		logger.critical("Start of segmented multiplication of %s\n    %s SNGs\n    %s methods\n    %d-bit precision\n    %d-bitstream length\n    %d-bit segment length\n    %d run loops\n    %f MAE", terms, sngs, methods_segmented, precision, bitstream_length, segment_length, run_loops, mae)
+		segmented_time = 0.0
 		for j in range(0, run_loops):
 			start = timer()
-			self.multiply(sngs, methods_opt, terms, precision, bitstream_length, segment_length, 0.0)
+			self.multiply(sngs, methods_segmented, terms, precision, bitstream_length, segment_length, mae)
 			end = timer()
-			optimized_time = optimized_time + (end - start)
-		optimized_time = optimized_time / run_loops 
-		logger.critical("End of optimized multiplication, time is %f seconds", optimized_time)		
+			segmented_time = segmented_time + (end - start)
+		segmented_time = segmented_time / run_loops 
+		logger.critical("End of segmented multiplication, time is %f seconds", segmented_time)		
 
 
-		logger.critical("Start of non-optimized multiplication of %s\n    %d-bit precision\n    %d-bitstream length\n    %d-bit segment length\n    %d run loops", terms, precision, bitstream_length, segment_length, run_loops)
+		logger.critical("Start of conventional multiplication of %s\n    %d-bit precision\n    %d-bitstream length\n    %d-bit segment length\n    %d run loops", terms, precision, bitstream_length, segment_length, run_loops)
 		start = timer()
-		self.multiply_non_opt(sngs, methods_non_opt, terms, precision, bitstream_length)
+		self.multiply_conventional(sngs, methods_conventional, terms, precision, bitstream_length, mae)
 		end = timer()
-		non_optimized_time = end - start
-		logger.critical("End of non-optimized multiplication, time is %f seconds", non_optimized_time)
-		logger.critical("Optimized multiplication is %.2fX faster", non_optimized_time / optimized_time)
-		return (non_optimized_time, optimized_time)
+		conventional_time = end - start
+		logger.critical("End of conventional multiplication, time is %f seconds", conventional_time)
+		logger.critical("Segmented multiplication is %.2fX faster", 1 / (conventional_time / segmented_time))
+		return (conventional_time, segmented_time)
 
-	def multiply_non_opt(self, sngs, methods, terms, precision, bitstream_length, epsilon = 0.0, debug = 0):
+	def multiply_conventional(self, sngs, methods, terms, precision, bitstream_length, mae = 0.0, debug = 0):
 		logger = logging.getLogger(__name__)	
 		encoded_terms = []
 		number_of_terms = len(terms)
@@ -102,7 +116,7 @@ class bctTest(unittest.TestCase):
 		logger.error("True result = %f, result_float = %f (%d/%d), error = %f", true_result, result_float, num_1s, final_bitstream_length, error)
 
 
-	def multiply(self, sngs, methods, terms, precision, bitstream_length, segment_length = 0, epsilon = 0.0, debug = 0):
+	def multiply(self, sngs, methods, terms, precision, bitstream_length, segment_length = 0, mae = 0.0, debug = 0):
 		logger = logging.getLogger(__name__)
 		encoded_terms = []
 		number_of_terms = len(terms)
@@ -149,7 +163,7 @@ class bctTest(unittest.TestCase):
 
 			error = abs(result_float - true_result)
 			logger.info("True result = %f, result_float = %f (%d/%d), error = %f", true_result, result_float, accumulated_result, accumulated_result_length, error)
-			if error <= epsilon:
+			if error <= mae:
 				logger.error("True result = %f, result_float = %f (%d/%d), error = %f", true_result, result_float, accumulated_result, accumulated_result_length, error)
 				logger.error("result is within error after %d bits (%d steps)", accumulated_result_length, int(accumulated_result_length / segment_length))
 				return
@@ -157,55 +171,6 @@ class bctTest(unittest.TestCase):
 				logger.error("not accurate enough with %d bits", accumulated_result_length)
 
 
-
-
-	def XXXtest_multiply_two_bitstreams(self):
-		# Measure multiplication of two bit streams
-		accumulated_result = 0
-		accumulated_result_length = 0
-		epsilon = 0.0
-
-		precision = 4
-		bitstream_length = pow(2, precision)
-
-		term1 = .5
-		term2 = .5
-		true_result = term1 * term2
-		n1 = bct.unary_SNG(precision, bitstream_length, term1)
-		n2 = bct.lfsr_SNG(precision, bitstream_length, term2)
-
-		print("Multiply ", n1, "by", n2)
-		print("True result is", true_result)
-		print("=====================================================")
-
-		for part in range(1, bitstream_length + 1):
-			cdn1 = numpy.zeros(0)
-			cdn2 = numpy.zeros(0)
-			major = bitstream_length * (part - 1)
-			for i in range(1, bitstream_length + 1):
-				offset = major + i
-				cdn1 = numpy.append(cdn1, bct.clockdiv_bit(1, n1, 2, offset))
-				cdn2 = numpy.append(cdn2, bct.clockdiv_bit(2, n2, 2, offset))
-
-			print("term 1 =", cdn1)
-			print("term 2 =", cdn2)
-	
-			cdn1Xcdn2 = bct.and_op(cdn1, cdn2)
-			print("term 1 X term 2 =", cdn1Xcdn2)
-
-			accumulated_result = accumulated_result + bct.number_of_1(cdn1Xcdn2)
-			accumulated_result_length += bitstream_length
-			result_float = accumulated_result / accumulated_result_length
-
-			error = abs(result_float - true_result)
-			print("true_result = ", true_result, ", result_float = ", result_float, ", error = ", error)
-			if error <= epsilon:
-				print("result is within error after", accumulated_result_length, "bits.")
-				return
-			else:
-				print("not accurate enough... try with", bitstream_length, "more bits.")
-	
-		
 # perform unit testing if no parameters specified (e.g. python bct.py)
 if __name__ == '__main__':
         unittest.main()
