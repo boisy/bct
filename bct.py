@@ -458,6 +458,15 @@ class bctTest(unittest.TestCase):
 		result_float = to_float(result)
 		self.assertEqual(result_float, .5 * .25)
 
+		# multiply .5 * .25
+		n1 = sobol_SNG(4, 16, .5)
+		n2 = sobol_SNG(4, 16, .25)
+		n1 = rotate(1, n1, 2)
+		n2 = rotate(2, n2, 2)
+		result = and_op(n1, n2)
+		result_float = to_float(result)
+		self.assertEqual(result_float, .5 * .25)
+
 	def test_unary_SNG(self):
 		result = unary_SNG(4, 16, .75)
 		numpy.testing.assert_equal(result, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0])
@@ -593,6 +602,7 @@ class bctTest(unittest.TestCase):
 	def test_sobol_sng(self):
 		result = sobol_SNG(8, 16, .25)
 		numpy.testing.assert_equal(result, [1., 0., 0., 0., 0., 0., 0., 1., 1., 0., 0., 0., 0., 0., 0., 1.])
+
 
 # perform unit testing if no parameters specified (e.g. python bct.py)
 if __name__ == '__main__':
