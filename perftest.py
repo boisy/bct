@@ -14,34 +14,73 @@ import bct
 # Use substreams to minimize the impact of the bitstreams on RAM, and at the same time, compute them piecemeal to see if they fall within our desired accuracy.
 class bctTest(unittest.TestCase):
 	def test_main(self):
+		logger = logging.getLogger(__name__)	
+		coloredlogs.install(level=100)
+
 		f = open("results.csv", "w+")
-		f.write("total time,sngs,methods_conventional,methods_segmented,precision,bitstream length, segment length,mae,time (conventional),time (segmented),improvement\n")
+		f.write("total time,sngs,methods,precision,bitstream length,result length,segment length,mae,# of operations\n")
 		f.close()
 
-		segment_length = 1
+		segment_length = 128
 		for mae in [0.0]:
-			precision = 8
+			precision = 7
 			sngs = [bct.sobol_SNG, bct.sobol_SNG, bct.sobol_SNG]
-			methods_conventional = [bct.rotate, bct.rotate, bct.rotate]
-			methods_segmented = [bct.rotate_bits, bct.rotate_bits, bct.rotate_bits]
-			bctTest.multiply_test_comprehensive_3_terms(self, precision, sngs, methods_conventional, methods_segmented, segment_length, mae)
+			methods = [bct.rotate_bits, bct.rotate_bits, bct.rotate_bits]
+			bctTest.multiply_test_comprehensive_3_terms_segmented(self, precision, sngs, methods, segment_length, mae)
 
-	def multiply_test_comprehensive_2_terms(self, precision, sngs, methods_conventional, methods_segmented, segment_length = 4, mae = 0.0):
+			sngs = [bct.sobol_SNG, bct.sobol_SNG, bct.sobol_SNG]
+			methods = [bct.rotate, bct.rotate, bct.rotate]
+			bctTest.multiply_test_comprehensive_3_terms_conventional(self, precision, sngs, methods, mae)
+
+			sngs = [bct.unary_SNG, bct.unary_SNG, bct.unary_SNG]
+			methods = [bct.rotate_bits, bct.rotate_bits, bct.rotate_bits]
+			bctTest.multiply_test_comprehensive_3_terms_segmented(self, precision, sngs, methods, segment_length, mae)
+
+			sngs = [bct.unary_SNG, bct.unary_SNG, bct.unary_SNG]
+			methods = [bct.rotate, bct.rotate, bct.rotate]
+			bctTest.multiply_test_comprehensive_3_terms_conventional(self, precision, sngs, methods, mae)
+
+	def multiply_test_comprehensive_2_terms_conventional(self, precision, sngs, methods, mae = 0.0):
 		logger = logging.getLogger(__name__)	
 		bitstream_length = pow(2, precision)
 		run_loops = 1
 
-		total_segmented_time = 0.0
-		total_conventional_time = 0.0
+		total_time = 0.0
 
 		for a in range(1, bitstream_length):
 			for b in range(1, bitstream_length):
 				term1 = float(a) / bitstream_length
 				term2 = float(b) / bitstream_length
-				times = bctTest.multiply_bitstreams(self, sngs, methods_conventional, methods_segmented, [term1, term2], precision, bitstream_length, segment_length, mae, run_loops)
-				total_conventional_time = total_conventional_time + times[0]
-				total_segmented_time = total_segmented_time + times[1]
-				logger.critical('total conventional time = %f', total_conventional_time)
+				time = bctTest.multiply_bitstreams_conventional(self, sngs, methods, [term1, term2], precision, bitstream_length, mae, run_loops)
+				total_time = total_time + time
+				logger.critical('total time = %f', total_time)
+
+		f = open("results.csv", "a+")
+
+		sng_names = ""
+		for s in sngs:
+			sng_names = sng_names + s.__name__ + " "
+
+		method_names = ""
+		for s in methods:
+			methods_names = methods_names + s.__name__ + " "
+
+		f.write(str(total_time) + "," + sng_names + "," + method_names + "," + str(precision) + "," + str(bitstream_length) + "," + str(mae) + "\n")
+		f.close()
+
+	def multiply_test_comprehensive_2_terms_segmented(self, precision, sngs, methods, stream_length, mae = 0.0):
+		logger = logging.getLogger(__name__)	
+		bitstream_length = pow(2, precision)
+		run_loops = 1
+
+		total_time = 0.0
+
+		for a in range(1, bitstream_length):
+			for b in range(1, bitstream_length):
+				term1 = float(a) / bitstream_length
+				term2 = float(b) / bitstream_length
+				time = bctTest.multiply_bitstreams_segmented(self, sngs, methods, [term1, term2], precision, bitstream_length, stream_length, mae, run_loops)
+				total_time = total_time + time
 				logger.critical('total segmented time = %f', total_segmented_time)
 
 		f = open("results.csv", "a+")
@@ -50,36 +89,33 @@ class bctTest(unittest.TestCase):
 		for s in sngs:
 			sng_names = sng_names + s.__name__ + " "
 
-		methods_conventional_names = ""
-		for s in methods_conventional:
-			methods_conventional_names = methods_conventional_names + s.__name__ + " "
+		method_names = ""
+		for s in methods:
+			methods_names = methods_names + s.__name__ + " "
 
-		methods_segmented_names = ""
-		for s in methods_segmented:
-			methods_segmented_names = methods_segmented_names + s.__name__ + " "
-
-		f.write(str(total_segmented_time + total_conventional_time) + "," + sng_names + "," + methods_conventional_names + "," + methods_segmented_names + "," + str(precision) + "," + str(bitstream_length) + "," + str(segment_length) + "," + str(mae) + "," + str(total_conventional_time) + "," + str(total_segmented_time) + "," + str((1 / (total_segmented_time / total_conventional_time))) + "\n")
+		f.write(str(total_time) + "," + sng_names + "," + method_names + "," + str(precision) + "," + str(bitstream_length) + "," + str(mae) + "\n")
 		f.close()
 
-	def multiply_test_comprehensive_3_terms(self, precision, sngs, methods_conventional, methods_segmented, segment_length = 4, mae = 0.0):
+	def multiply_test_comprehensive_3_terms_conventional(self, precision, sngs, methods, mae = 0.0):
 		logger = logging.getLogger(__name__)	
 		bitstream_length = pow(2, precision)
+		result_length = 3 * bitstream_length
 		run_loops = 1
 
-		total_segmented_time = 0.0
-		total_conventional_time = 0.0
+		total_time = 0.0
+		number_of_operations = 0
 
-		for a in range(1, bitstream_length):
-			for b in range(1, bitstream_length):
-				for c in range(1, bitstream_length):
+		stride = int(bitstream_length / 4)
+		for a in range(1, bitstream_length, stride):
+			for b in range(1, bitstream_length, stride):
+				for c in range(1, bitstream_length, stride):
 					term1 = float(a) / bitstream_length
 					term2 = float(b) / bitstream_length
 					term3 = float(c) / bitstream_length
-					times = bctTest.multiply_bitstreams(self, sngs, methods_conventional, methods_segmented, [term1, term2, term3], precision, bitstream_length, segment_length, mae, run_loops)
-					total_conventional_time = total_conventional_time + times[0]
-					total_segmented_time = total_segmented_time + times[1]
-					logger.critical('total conventional time = %f', total_conventional_time)
-					logger.critical('total segmented time = %f', total_segmented_time)
+					time = bctTest.multiply_bitstreams_conventional(self, sngs, methods, [term1, term2, term3], precision, bitstream_length, mae, run_loops)
+					total_time = total_time + time
+					number_of_operations = number_of_operations + 1
+					logger.critical('total time = %f', total_time)
 
 		f = open("results.csv", "a+")
 
@@ -87,42 +123,73 @@ class bctTest(unittest.TestCase):
 		for s in sngs:
 			sng_names = sng_names + s.__name__ + " "
 
-		methods_conventional_names = ""
-		for s in methods_conventional:
-			methods_conventional_names = methods_conventional_names + s.__name__ + " "
+		method_names = ""
+		for s in methods:
+			method_names = method_names + s.__name__ + " "
 
-		methods_segmented_names = ""
-		for s in methods_segmented:
-			methods_segmented_names = methods_segmented_names + s.__name__ + " "
-
-		f.write(str(total_segmented_time + total_conventional_time) + "," + sng_names + "," + methods_conventional_names + "," + methods_segmented_names + "," + str(precision) + "," + str(bitstream_length) + "," + str(segment_length) + "," + str(mae) + "," + str(total_conventional_time) + "," + str(total_segmented_time) + "," + str((1 / (total_segmented_time / total_conventional_time))) + "\n")
+		f.write(str(total_time) + "," + sng_names + "," + method_names + "," + str(precision) + "," + str(bitstream_length) + "," + str(result_length) + "," + "," + str(mae) + "," + str(number_of_operations) + "\n")
 		f.close()
 
-	def multiply_bitstreams(self, sngs, methods_conventional, methods_segmented, terms, precision=4, bitstream_length=16, segment_length=4, mae = 0.0, run_loops=10):
+	def multiply_test_comprehensive_3_terms_segmented(self, precision, sngs, methods, segment_length, mae = 0.0):
 		logger = logging.getLogger(__name__)	
-		coloredlogs.install(level=100)
-#		coloredlogs.install(level='CRITICAL')
-		logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+		bitstream_length = pow(2, precision)
+		result_length = 3 * bitstream_length
+		run_loops = 1
 
-		logger.critical("Start of segmented multiplication of %s\n    %s SNGs\n    %s methods\n    %d-bit precision\n    %d-bitstream length\n    %d-bit segment length\n    %d run loops\n    %f MAE", terms, sngs, methods_segmented, precision, bitstream_length, segment_length, run_loops, mae)
-		segmented_time = 0.0
+		total_time = 0.0
+		number_of_operations = 0
+
+		stride = int(bitstream_length / 4)
+		for a in range(1, bitstream_length, stride):
+			for b in range(1, bitstream_length, stride):
+				for c in range(1, bitstream_length, stride):
+					term1 = float(a) / bitstream_length
+					term2 = float(b) / bitstream_length
+					term3 = float(c) / bitstream_length
+					time = bctTest.multiply_bitstreams_segmented(self, sngs, methods, [term1, term2, term3], precision, bitstream_length, segment_length, mae, run_loops)
+					total_time = total_time + time
+					number_of_operations = number_of_operations + 1
+					logger.critical('total time = %f', total_time)
+
+		f = open("results.csv", "a+")
+
+		sng_names = ""
+		for s in sngs:
+			sng_names = sng_names + s.__name__ + " "
+
+		method_names = ""
+		for s in methods:
+			method_names = method_names + s.__name__ + " "
+
+		f.write(str(total_time) + "," + sng_names + "," + method_names + "," + str(precision) + "," + str(bitstream_length) + "," + str(result_length) + "," + str(segment_length) + "," + str(mae) + "," + str(number_of_operations) + "\n")
+		f.close()
+
+	def multiply_bitstreams_conventional(self, sngs, methods, terms, precision=4, bitstream_length=16, mae = 0.0, run_loops=10):
+		logger = logging.getLogger(__name__)	
+		logger.critical("Start of conventional multiplication of %s\n    %s SNGs\n    %s methods\n    %d-bit precision\n    %d-bitstream length\n    %d run loops\n    %f MAE", terms, sngs, methods, precision, bitstream_length, run_loops, mae)
+		time = 0.0
 		for j in range(0, run_loops):
 			start = timer()
-			self.multiply(sngs, methods_segmented, terms, precision, bitstream_length, segment_length, mae)
+			self.multiply_conventional(sngs, methods, terms, precision, bitstream_length, mae)
 			end = timer()
-			segmented_time = segmented_time + (end - start)
-		segmented_time = segmented_time / run_loops 
-		logger.critical("End of segmented multiplication, time is %f seconds", segmented_time)		
+			time = time + (end - start)
+		time = time / run_loops 
+		logger.critical("End of conventional multiplication, time is %f seconds", time)		
+		return time
 
 
-		logger.critical("Start of conventional multiplication of %s\n    %d-bit precision\n    %d-bitstream length\n    %d-bit segment length\n    %d run loops", terms, precision, bitstream_length, segment_length, run_loops)
-		start = timer()
-		self.multiply_conventional(sngs, methods_conventional, terms, precision, bitstream_length, mae)
-		end = timer()
-		conventional_time = end - start
-		logger.critical("End of conventional multiplication, time is %f seconds", conventional_time)
-		logger.critical("Segmented multiplication is %.2fX faster", 1 / (conventional_time / segmented_time))
-		return (conventional_time, segmented_time)
+	def multiply_bitstreams_segmented(self, sngs, methods, terms, precision=4, bitstream_length=16, segment_length=4, mae = 0.0, run_loops=10):
+		logger = logging.getLogger(__name__)	
+		logger.critical("Start of segemnted multiplication of %s\n    %d-bit precision\n    %d-bitstream length\n    %d-bit segment length\n    %d run loops", terms, precision, bitstream_length, segment_length, run_loops)
+		time = 0.0
+		for j in range(0, run_loops):
+			start = timer()
+			self.multiply_segmented(sngs, methods, terms, precision, bitstream_length, segment_length, mae)
+			end = timer()
+			time = time + (end - start)
+		time = time / run_loops
+		logger.critical("End of segmented multiplication, time is %f seconds", time)
+		return time
 
 	def multiply_conventional(self, sngs, methods, terms, precision, bitstream_length, mae = 0.0, debug = 0):
 		logger = logging.getLogger(__name__)	
@@ -152,7 +219,7 @@ class bctTest(unittest.TestCase):
 		logger.error("True result = %f, result_float = %f (%d/%d), error = %f", true_result, result_float, num_1s, final_bitstream_length, error)
 
 
-	def multiply(self, sngs, methods, terms, precision, bitstream_length, segment_length = 0, mae = 0.0, debug = 0):
+	def multiply_segmented(self, sngs, methods, terms, precision, bitstream_length, segment_length = 0, mae = 0.0, debug = 0):
 		logger = logging.getLogger(__name__)
 		encoded_terms = []
 		number_of_terms = len(terms)
