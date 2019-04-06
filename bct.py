@@ -164,20 +164,21 @@ def unary_SNG(precision, stream_length, input_number_float):
 # Parameters:
 #   order = the order of the bitstream in the operation (1, 2, 3, ...)
 #   bitstream = the bitstream (e.g [1, 0, 0, 1])
+#   bitstream_length = the length of the bitstream (e.g 4)
 #   total_inputs = the total inputs for the operation (1, 2, 3, ...)
 #   position = the index into the clock divided bitstream to obtain the bit
-def clockdiv_bit(order, bitstream, total_inputs, position):
+def clockdiv_bit(order, bitstream, bitstream_length, total_inputs, position):
 	# compute the total length of the clock divided bitstream
-	total_length = pow(len(bitstream), total_inputs)
+	total_length = pow(bitstream_length, total_inputs)
 	# check if position is valid and raise an exception if it is out of bounds
 	if (position < 1 or position > total_length):
 		raise Exception('Out of range')
 
 	# determine the bitstream's repeat count
-	repeat = pow(len(bitstream), order - 1)
+	repeat = pow(bitstream_length, order - 1)
 
 	# compute the position to the bit and return the bit
-	bit_position = (int((position - 1) / repeat)) % len(bitstream)
+	bit_position = (int((position - 1) / repeat)) % bitstream_length
 
 	return bitstream[bit_position]
 
@@ -188,7 +189,7 @@ def clockdiv_bits(order, bitstream, total_inputs, position, length):
 
 	# loop through and build the vector of bits
 	for i in range(position, position + length):
-		result = numpy.append(result, clockdiv_bit(order, bitstream, total_inputs, i))
+		result = numpy.append(result, clockdiv_bit(order, bitstream, len(bitstream), total_inputs, i))
 
 	return result	
 
@@ -206,7 +207,7 @@ def clockdiv(order, bitstream, total_inputs):
 # Notes:
 # - length of bitstream impacts rotation frequency
 #   e.g. rotate(2, [1, 0], 3) -> array([1., 0., 0., 1., 1., 0., 0., 1.])
-def rotate_bit(order, bitstream, total_inputs, position):
+def rotate_bit(order, bitstream, bitstream_length, total_inputs, position):
 	# concrete example: order = 2, bitstream = [1, 0, 1, 1], so  group size = 4^(2-1):
 	# after group 0, last bit (1) repeats in first bit of group 1, position = 1 / 4
 	# after group 1, next to last bit (1) repeats in first bit of group 2, position = 2 / 4
@@ -217,26 +218,26 @@ def rotate_bit(order, bitstream, total_inputs, position):
 	# ((position - 1) % group size) = bit in group (0 based)
 	# 
 	
-	total_length = pow(len(bitstream), total_inputs)
+	total_length = pow(bitstream_length, total_inputs)
 
 	# check if position is valid
 	if (position < 1 or position > total_length):
 		raise Exception('Out of range')
 
-	group_size = pow(len(bitstream), order - 1)
+	group_size = pow(bitstream_length, order - 1)
 	if (group_size == 1):
 		group = 0
 	else:
 		group = int((position - 1) / group_size)
 
-	bit_to_return = ((position - 1) - group) % len(bitstream)
+	bit_to_return = ((position - 1) - group) % bitstream_length
 
 	return bitstream[bit_to_return]
 
 def rotate_bits(order, bitstream, total_inputs, position, length):
 	result = numpy.zeros(0)
 	for i in range(position, position + length):
-		result = numpy.append(result, rotate_bit(order, bitstream, total_inputs, i))
+		result = numpy.append(result, rotate_bit(order, bitstream, len(bitstream), total_inputs, i))
 	return result	
 
 def rotate(order, bitstream, total_inputs):
@@ -271,9 +272,9 @@ def rotate_suboptimal(order, bitstream, total_inputs):
 
 # Relatively prime
 # Added Nov 14 2018
-def relatively_prime_bit(bitstream, entire_length, position):
-	number_of_repeats = int(entire_length / len(bitstream))
-	if (position < 1 or position > number_of_repeats * len(bitstream)):
+def relatively_prime_bit(bitstream, bitstream_length, entire_length, position):
+	number_of_repeats = int(entire_length / bitstream_length)
+	if position < 1 or position > number_of_repeats * bitstream_length:
 		raise Exception('Out of range')
 	bit_to_return = (position - 1) % len(bitstream)
 
@@ -282,7 +283,7 @@ def relatively_prime_bit(bitstream, entire_length, position):
 def relatively_prime_bits(bitstream, entire_length, position, length):
 	result = numpy.zeros(0)
 	for i in range(position, position + length):
-		result = numpy.append(result, relatively_prime_bit(bitstream, entire_length, i))
+		result = numpy.append(result, relatively_prime_bit(bitstream, len(bitstream), entire_length, i))
 	return result	
 
 def relatively_prime(bitstream, entire_length):
