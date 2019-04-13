@@ -159,6 +159,28 @@ def unary_SNG(precision, stream_length, input_number_float):
 			result = numpy.append(result, 0)
 	return result
 
+last_position = 1
+
+def clockdiv_subopt(order, bitstream, total_inputs):
+	result = numpy.zeros(0)
+	global last_position	
+	# compute the total length of the clock divided bitstream
+	total_length = pow(len(bitstream), total_inputs)
+	# check if position is valid and raise an exception if it is out of bounds
+	if (last_position < 1 or last_position > total_length):
+		raise Exception('Out of range')
+
+	repeat_count = pow(2, order - 1)
+	while (last_position < total_length):
+		for i in range(len(bitstream)):
+			bit = bitstream[i]
+			for j in range(repeat_count):
+				result = numpy.append(result, bit)
+				last_position = last_position + 1
+
+	last_position = 1
+	return result
+		
 # Clock division method that returns one bit
 # This method returns the bit (0 or 1) at 'position' (1 <= position <= pow(len(bitstream), total_inputs))
 # Parameters:
@@ -312,15 +334,17 @@ def not_op(bitstream):
 	
 # AND operation on bitstreams
 def and_op(bitstream1, bitstream2):
-	result = numpy.zeros(0)
-
-	for x in range(len(bitstream1)):
-		bs1 = int(bitstream1[x])
-		bs2 = int(bitstream2[x])
-		bsr = bs1 & bs2
-		result = numpy.append(result, bsr)
-
+	result = numpy.logical_and(bitstream1, bitstream2)
+	
 	return result
+#	result = numpy.zeros(0)
+#	for x in range(len(bitstream1)):
+#		bs1 = int(bitstream1[x])
+#		bs2 = int(bitstream2[x])
+#		bsr = bs1 & bs2
+#		result = numpy.append(result, bsr)
+#
+#	return result
 	
 # NAND operation on bitstreams
 def nand_op(bitstream1, bitstream2):

@@ -24,39 +24,35 @@ class bctTest(unittest.TestCase):
 		f.write("total time,terms,sngs,methods,precision,bitstream length,result length,segment length,mae,# of operations\n")
 		f.close()
 
-		bctTest.perfTest(self, 4, 5)
+		terms = []
+		precision = 4
+		bitstream_length = pow(2, precision)
+#		for i in range(5):
+#			terms.append(random.randrange(1, bitstream_length - 1) / bitstream_length)
+		terms = [0.4375, 0.8125, 0.5, 0.375]
+#		terms = [0.75, 0.125, 0.75, 0.5, 0.625]
+		bctTest.perfTest(self, precision, terms, 128)
 
-	def perfTest(self, precision, term_count):
-		segment_length = 128
+	def perfTest(self, precision, terms, segment_length = 64):
 
 		for mae in [0.0]:
-			bitstream_length = pow(2, precision)
-			terms = []
 			sngs = []
 			methods = []
-			for i in range(term_count):
-				terms.append(random.randrange(1, bitstream_length - 1) / bitstream_length)
-
-#			for i in range(term_count):
-#				sngs.append(bct.sobol_SNG)
-#				methods.append(bct.rotate_bits)
-#			bctTest.multiply_test_segmented(self, terms, precision, sngs, methods, segment_length, mae)
-
-#			sngs = [bct.sobol_SNG, bct.sobol_SNG, bct.sobol_SNG]
-#			methods = [bct.rotate, bct.rotate, bct.rotate]
-#			bctTest.multiply_test_conventional(self, terms, precision, sngs, methods, mae)
+			term_count = len(terms)
 
 			for i in range(term_count):
 				sngs.append(bct.unary_SNG)
-				methods.append(bct.rotate_bits)
+				methods.append(bct.clockdiv_bits)
+#				methods.append(bct.rotate_bits)
 			bctTest.multiply_test_segmented(self, terms, precision, sngs, methods, segment_length, mae)
 
 			sngs = []
 			methods = []
 			for i in range(term_count):
 				sngs.append(bct.unary_SNG)
-				methods.append(bct.rotate)
-			bctTest.multiply_test_conventional(self, terms, precision, sngs, methods, mae)
+				methods.append(bct.clockdiv)
+#				methods.append(bct.rotate)
+#			bctTest.multiply_test_conventional(self, terms, precision, sngs, methods, mae)
 
 	def multiply_test_conventional(self, terms, precision, sngs, methods, mae = 0.0):
 		logger = logging.getLogger(__name__)	
