@@ -1,4 +1,6 @@
 # Performance test
+import multiprocessing
+from multiprocessing import Process, Queue
 import time
 from timeit import default_timer as timer
 import unittest
@@ -57,7 +59,7 @@ class bctTest(unittest.TestCase):
 		f.close()
 
 		terms = []
-		precision = 5
+		precision = 5	
 		bitstream_length = pow(2, precision)
 #		for i in range(5):
 #			terms.append(random.randrange(1, bitstream_length - 1) / bitstream_length)
@@ -217,6 +219,24 @@ class bctTest(unittest.TestCase):
 		error = abs(result_float - true_result)
 		logger.error("True result = %f, result_float = %f (%d/%d), error = %f", true_result, result_float, num_1s, final_bitstream_length, error)
 
+	def mproc(q, segment, segment_length, number_of_terms, methods, encoded_terms, logger, accumulated_result, accumulated_result_length):
+		expanded_terms = []
+		segment_start_bit = segment_length * segment
+		for j in range(number_of_terms):
+			segment_offset = (segment - 1) * segment_length + 1
+			m = methods[j]
+			cdterm = m(j + 1, encoded_terms[j], number_of_terms, segment_offset, segment_length)
+			expanded_terms.append(cdterm)
+		result = numpy.ones(segment_length)
+		for i in range(number_of_terms):
+#			logger.debug("term %d = %s", i + 1, expanded_terms[i])
+			result = bct.and_op(result, expanded_terms[i])
+		logger.debug("result = %s", result)
+		q.put([bct.number_of_1(result)])
+
+#		accumulated_result = accumulated_result + bct.number_of_1(result)
+#		accumulated_result_length += segment_length
+#		result_float = accumulated_result / accumulated_result_length
 
 	def multiply_segmented(self, sngs, methods, terms, precision, bitstream_length, segment_length = 0, mae = 0.0, debug = 0):
 		logger = logging.getLogger(__name__)
@@ -245,33 +265,28 @@ class bctTest(unittest.TestCase):
 			segment_length = bitstream_length
 
 		count = int(final_bitstream_length / segment_length)
+		q = Queue()
 		for segment in range(1, count + 1):
-			expanded_terms = []
-			segment_start_bit = segment_length * segment
-			for j in range(number_of_terms):
-				segment_offset = (segment - 1) * segment_length + 1
-				m = methods[j]
-				cdterm = m(j + 1, encoded_terms[j], number_of_terms, segment_offset, segment_length)
-				expanded_terms.append(cdterm)
-			result = numpy.ones(segment_length)
-			for i in range(number_of_terms):
-				logger.debug("term %d = %s", i + 1, expanded_terms[i])
-				result = bct.and_op(result, expanded_terms[i])
-			logger.debug("result = %s", result)
-
-			accumulated_result = accumulated_result + bct.number_of_1(result)
+			p = multiprocessing.Process(target=bctTest.mproc, args=(q, segment, segment_length, number_of_terms, methods, encoded_terms, logger, accumulated_result, accumulated_result_length, ))
+			p.start()
+			accumulated_result = accumulated_result + q.get()[0]
 			accumulated_result_length += segment_length
-			result_float = accumulated_result / accumulated_result_length
+			p.join()
 
-			if mae != 0.0:
-				error = abs(result_float - true_result)
-				logger.info("True result = %f, result_float = %f (%d/%d), error = %f", true_result, result_float, accumulated_result, accumulated_result_length, error)
-				if error <= mae:
-					logger.error("True result = %f, result_float = %f (%d/%d), error = %f", true_result, result_float, accumulated_result, accumulated_result_length, error)
-					logger.error("result is within error after %d bits (%d steps)", accumulated_result_length, int(accumulated_result_length / segment_length))
-					return
-				else:
-					logger.error("not accurate enough with %d bits", accumulated_result_length)
+		result_float = accumulated_result / accumulated_result_length
+			
+		print(result_float)
+
+		if mae != 0.0:
+			error = abs(result_float - true_result)
+			logger.info("True result = %f, result_float = %f (%d/%d), error = %f", true_result, result_float, accumulated_result, accumulated_result_length, error)
+			if error <= mae:
+				logger.error("True result = %f, result_float = %f (%d/%d), error = %f", true_result, result_float, accumulated_result, accumulated_result_length, error)
+				logger.error("result is within error after %d bits (%d steps)", accumulated_result_length, int(accumulated_result_length / segment_length))
+				return
+			else:
+				logger.error("not accurate enough with %d bits", accumulated_result_length)
+
 
 
 # perform unit testing if no parameters specified (e.g. python bct.py)
