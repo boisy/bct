@@ -265,13 +265,27 @@ class bctTest(unittest.TestCase):
 			segment_length = bitstream_length
 
 		count = int(final_bitstream_length / segment_length)
+		
+		jobCount = 32
+		loops = int(count / jobCount)
 		q = Queue()
-		for segment in range(1, count + 1):
-			p = multiprocessing.Process(target=bctTest.mproc, args=(q, segment, segment_length, number_of_terms, methods, encoded_terms, logger, accumulated_result, accumulated_result_length, ))
-			p.start()
-			accumulated_result = accumulated_result + q.get()[0]
-			accumulated_result_length += segment_length
-			p.join()
+		for loop in range(0, loops):
+			jobs = []
+			for segment in range(loop * jobCount, loop * jobCount + jobCount):
+				p = multiprocessing.Process(target=bctTest.mproc, args=(q, segment + 1, segment_length, number_of_terms, methods, encoded_terms, logger, accumulated_result, accumulated_result_length, ))
+				jobs.append(p)
+				p.start()
+
+			for job in jobs:
+				job.join()
+
+			for loop in range(0, jobCount):
+				accumulated_result = accumulated_result + q.get()[0]
+				accumulated_result_length += segment_length
+
+			print(accumulated_result, accumulated_result_length)
+#			for job in jobs:
+#				job.close()
 
 		result_float = accumulated_result / accumulated_result_length
 			
